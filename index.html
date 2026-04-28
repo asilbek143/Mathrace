@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MathRace 🧮</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f5;color:#1a1a1a;min-height:100vh;display:flex;justify-content:center;padding:1rem}
+.app{max-width:680px;width:100%;padding:0.5rem 0}
+.screen{display:none}.screen.active{display:block}
+
+input{width:100%;padding:9px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;font-size:14px;outline:none}
+input:focus{border-color:#378ADD}
+
+.hero{text-align:center;padding:1.5rem 0 1rem}
+.logo{font-size:32px;margin-bottom:6px}
+.hero h1{font-size:24px;font-weight:500;letter-spacing:-0.5px}
+.hero p{font-size:13px;color:#666;margin-top:4px}
+.card{background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px}
+.inp-row{display:flex;gap:8px;margin-bottom:10px}
+.inp-row input{flex:1}
+.btn{padding:9px 18px;border-radius:8px;border:1px solid #ddd;background:#fff;color:#1a1a1a;font-size:13px;cursor:pointer;transition:all 0.12s;white-space:nowrap}
+.btn:hover{background:#f0f0f0}
+.btn-blue{background:#378ADD;color:#fff;border-color:#378ADD}
+.btn-blue:hover{background:#185FA5;border-color:#185FA5}
+.btn-full{width:100%;padding:11px;font-size:14px;font-weight:500}
+.btn-sm{padding:6px 12px;font-size:12px}
+.diff-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
+.dc{border:1.5px solid #ddd;border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.12s}
+.dc:hover{border-color:#aaa;background:#f5f5f5}
+.dc.sel{border-color:#378ADD;background:#E6F1FB}
+.dc .di{font-size:18px;margin-bottom:4px}
+.dc .dl{font-size:12px;font-weight:500}
+.dc .dd{font-size:10px;color:#888;margin-top:2px}
+.invite-box{background:#E6F1FB;border:0.5px solid #B5D4F4;border-radius:10px;padding:1rem;margin-bottom:10px}
+.invite-code{font-size:28px;font-weight:500;letter-spacing:4px;color:#0C447C;text-align:center;padding:10px;font-family:monospace}
+.copy-row{display:flex;gap:8px;justify-content:center;margin-top:8px}
+.invite-hint{font-size:12px;color:#185FA5;text-align:center;margin-top:6px}
+.join-card{background:#EAF3DE;border:0.5px solid #C0DD97;border-radius:10px;padding:1rem;margin-bottom:10px}
+.join-row{display:flex;gap:8px;align-items:center}
+.join-row input{flex:1;letter-spacing:3px;font-size:16px;font-weight:500;text-transform:uppercase}
+.quiz-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.prog-wrap{flex:1;height:5px;background:#eee;border-radius:3px;overflow:hidden}
+.prog-bar{height:100%;background:#378ADD;border-radius:3px;transition:width 0.3s}
+.qnum{font-size:12px;color:#888;min-width:44px}
+.sbadge{font-size:12px;font-weight:500;color:#185FA5;background:#E6F1FB;padding:3px 9px;border-radius:20px}
+.timer-wrap{height:3px;background:#eee;border-radius:2px;overflow:hidden;margin-bottom:8px}
+.timer-bar{height:100%;border-radius:2px}
+.qcard{background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;padding:1.25rem;text-align:center;margin-bottom:8px}
+.qtxt{font-size:24px;font-weight:500;margin-bottom:6px}
+.qhint{font-size:11px;color:#888}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.obtn{padding:13px;border-radius:8px;border:1.5px solid #ddd;background:#fff;font-size:17px;font-weight:500;cursor:pointer;transition:all 0.12s;color:#1a1a1a}
+.obtn:hover:not(:disabled){border-color:#378ADD;background:#E6F1FB}
+.obtn.correct{border-color:#1D9E75!important;background:#E1F5EE!important;color:#085041!important}
+.obtn.wrong{border-color:#E24B4A!important;background:#FCEBEB!important;color:#501313!important}
+.obtn:disabled{cursor:default}
+.fbmsg{font-size:13px;padding:8px 12px;border-radius:8px;margin-bottom:8px;text-align:center;min-height:34px}
+.fbmsg.ok{background:#E1F5EE;color:#085041}
+.fbmsg.no{background:#FCEBEB;color:#501313}
+.res-center{text-align:center;padding:1rem 0}
+.res-icon{font-size:44px;margin-bottom:8px}
+.res-score{font-size:40px;font-weight:500}
+.res-lbl{font-size:13px;color:#888;margin-bottom:1rem}
+.stats-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:1rem}
+.scard{background:#f5f5f5;border-radius:8px;padding:10px 16px;text-align:center;min-width:70px}
+.sv{font-size:18px;font-weight:500}
+.sl{font-size:11px;color:#888;margin-top:2px}
+.tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.tab{padding:6px 14px;border-radius:20px;border:1px solid #ddd;font-size:12px;cursor:pointer;color:#888;background:#fff}
+.tab.active{background:#378ADD;color:#fff;border-color:#378ADD}
+.lb-title{font-size:12px;font-weight:500;color:#888;margin-bottom:8px}
+.lb-row{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;background:#fff;border:0.5px solid #e0e0e0;margin-bottom:5px}
+.lb-row.me{border-color:#378ADD;background:#E6F1FB}
+.lb-rank{font-size:13px;font-weight:500;min-width:20px;color:#888}
+.lb-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0}
+.lb-name{flex:1;font-size:13px}
+.lb-dtag{font-size:10px;padding:2px 7px;border-radius:10px;flex-shrink:0}
+.lb-time{font-size:11px;color:#888;flex-shrink:0}
+.lb-sc{font-size:13px;font-weight:500;flex-shrink:0}
+.empty{text-align:center;padding:1.5rem;color:#888;font-size:13px}
+.share-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:1rem}
+.section-title{font-size:13px;font-weight:500;color:#888;margin-bottom:8px}
+.divider{height:0.5px;background:#eee;margin:12px 0}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0C447C;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1}
+.friend-tag{display:inline-flex;align-items:center;gap:4px;background:#E1F5EE;color:#085041;border-radius:10px;padding:3px 8px;font-size:11px;margin:2px}
+.online-dot{width:7px;height:7px;border-radius:50%;background:#1D9E75;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="s-home" class="screen active">
+    <div class="hero">
+      <div class="logo">🧮</div>
+      <h1>MathRace</h1>
+      <p>Do'stlar bilan haqiqiy reyting uchun bellashing!</p>
+    </div>
+    <div class="card">
+      <div class="section-title">Ismingiz</div>
+      <div class="inp-row">
+        <input type="text" id="pname" placeholder="Ismingizni kiriting..." maxlength="16" />
+      </div>
+      <div class="section-title">Qiyinlik</div>
+      <div class="diff-row">
+        <div class="dc sel" data-d="easy" onclick="selD(this,'easy')"><div class="di">🟢</div><div class="dl">Oson</div><div class="dd">+,− · 1-20</div></div>
+        <div class="dc" data-d="medium" onclick="selD(this,'medium')"><div class="di">🟡</div><div class="dl">O'rtacha</div><div class="dd">×,÷ · 1-50</div></div>
+        <div class="dc" data-d="hard" onclick="selD(this,'hard')"><div class="di">🔴</div><div class="dl">Qiyin</div><div class="dd">Aralash+algebra</div></div>
+      </div>
+      <button class="btn btn-blue btn-full" onclick="startGame()">Boshlash ↗</button>
+    </div>
+    <div class="card">
+      <div class="section-title">👥 Do'stlarni taklif qiling</div>
+      <div id="my-invite-box" style="display:none"></div>
+      <button class="btn btn-full" id="gen-invite-btn" onclick="genInvite()" style="margin-bottom:10px">Taklif kodi yaratish 🔗</button>
+      <div class="divider"></div>
+      <div class="section-title">Do'stning kodi bilan qo'shilish</div>
+      <div class="join-row">
+        <input type="text" id="join-code-inp" placeholder="KODNI KIRITING" maxlength="6" style="text-transform:uppercase" />
+        <button class="btn btn-blue" onclick="joinCode()">Qo'shilish</button>
+      </div>
+      <div id="join-status" style="font-size:12px;color:#888;margin-top:6px"></div>
+    </div>
+    <div class="card" id="home-lb-card">
+      <div class="tabs">
+        <div class="tab active" onclick="lbTab(this,'all')">Hammasi</div>
+        <div class="tab" onclick="lbTab(this,'easy')">Oson</div>
+        <div class="tab" onclick="lbTab(this,'medium')">O'rtacha</div>
+        <div class="tab" onclick="lbTab(this,'hard')">Qiyin</div>
+        <div class="tab" onclick="lbTab(this,'friends')">Do'stlar</div>
+      </div>
+      <div id="home-lb"><div class="empty">Yuklanmoqda...</div></div>
+    </div>
+  </div>
+
+  <div id="s-quiz" class="screen">
+    <div class="quiz-header">
+      <span class="qnum" id="qnum">1/10</span>
+      <div class="prog-wrap"><div class="prog-bar" id="prog-bar" style="width:10%"></div></div>
+      <span class="sbadge" id="live-sc">0 ball</span>
+    </div>
+    <div class="timer-wrap"><div class="timer-bar" id="timer-bar" style="width:100%;background:#378ADD"></div></div>
+    <div class="qcard">
+      <div class="qtxt" id="qtxt">?</div>
+      <div class="qhint" id="qhint"></div>
+    </div>
+    <div class="fbmsg" id="fbmsg"></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div id="s-result" class="screen">
+    <div class="res-center">
+      <div class="res-icon" id="res-icon">🏆</div>
+      <div class="res-score" id="res-score">0</div>
+      <div class="res-lbl">ball to'pladingiz!</div>
+      <div class="stats-row">
+        <div class="scard"><div class="sv" id="st-c">0</div><div class="sl">To'g'ri</div></div>
+        <div class="scard"><div class="sv" id="st-w">0</div><div class="sl">Noto'g'ri</div></div>
+        <div class="scard"><div class="sv" id="st-t">0s</div><div class="sl">Vaqt</div></div>
+        <div class="scard"><div class="sv" id="st-r">#—</div><div class="sl">Reyting</div></div>
+      </div>
+      <div id="res-friends-lb" style="margin-bottom:1rem"></div>
+      <div>
+        <div class="lb-title">🏅 Umumiy reyting</div>
+        <div id="res-lb"></div>
+      </div>
+      <div class="share-row">
+        <button class="btn btn-blue" onclick="playAgain()">Qayta o'ynash</button>
+        <button class="btn" onclick="goHome()">Bosh sahifa</button>
+        <button class="btn" onclick="shareScore()">Ulashish 📤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'mathrace_v3_scores';
+const INVITE_KEY = 'mathrace_v3_invites';
+const MY_CODE_KEY = 'mathrace_v3_mycode';
+const FRIENDS_KEY = 'mathrace_v3_friends';
+
+let scores = [], invites = {}, myCode = '', friends = [];
+let diff = 'easy', pname = '', qs = [], qi = 0, score = 0, cor = 0, wrg = 0;
+let startT = 0, tInt = null, timeLeft = 15, answered = false;
+
+const DLABEL = {easy:'Oson', medium:"O'rtacha", hard:'Qiyin'};
+const DCOLORS = {
+  easy:['#E1F5EE','#085041'],
+  medium:['#FAEEDA','#412402'],
+  hard:['#FCEBEB','#501313']
+};
+const AVBG = ['#E6F1FB','#EEEDFE','#E1F5EE','#FAEEDA','#FCEBEB','#FBEAF0','#EAF3DE'];
+const AVTX = ['#0C447C','#3C3489','#085041','#412402','#501313','#72243E','#27500A'];
+
+function load() {
+  try { scores = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { scores = []; }
+  try { invites = JSON.parse(localStorage.getItem(INVITE_KEY)) || {}; } catch { invites = {}; }
+  try { myCode = localStorage.getItem(MY_CODE_KEY) || ''; } catch { myCode = ''; }
+  try { friends = JSON.parse(localStorage.getItem(FRIENDS_KEY)) || []; } catch { friends = []; }
+  if (!scores.length) addDemo();
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
+    localStorage.setItem(INVITE_KEY, JSON.stringify(invites));
+    if (myCode) localStorage.setItem(MY_CODE_KEY, myCode);
+    localStorage.setItem(FRIENDS_KEY, JSON.stringify(friends));
+  } catch {}
+}
+
+function addDemo() {
+  const demo = [
+    {name:'Jasur',diff:'hard',score:1250,cor:9,wrg:1,time:87,date:Date.now()-3600000},
+    {name:'Malika',diff:'medium',score:980,cor:8,wrg:2,time:65,date:Date.now()-7200000},
+    {name:'Doniyor',diff:'easy',score:750,cor:10,wrg:0,time:42,date:Date.now()-10800000},
+    {name:'Zulfiya',diff:'hard',score:1100,cor:8,wrg:2,time:102,date:Date.now()-14400000},
+    {name:'Bobur',diff:'medium',score:820,cor:7,wrg:3,time:78,date:Date.now()-18000000},
+    {name:'Nilufar',diff:'easy',score:600,cor:9,wrg:1,time:55,date:Date.now()-21600000},
+    {name:'Sardor',diff:'hard',score:950,cor:7,wrg:3,time:115,date:Date.now()-25200000},
+  ];
+  demo.forEach(d => scores.push(d));
+  save();
+}
+
+function genCode() {
+  return Math.random().toString(36).slice(2,8).toUpperCase();
+}
+
+function genInvite() {
+  const nm = document.getElementById('pname').value.trim();
+  if (!nm) { showToast('Avval ismingizni kiriting!'); document.getElementById('pname').focus(); return; }
+  if (!myCode) { myCode = genCode(); }
+  invites[myCode] = { owner: nm, created: Date.now() };
+  save();
+  showInviteBox();
+  document.getElementById('gen-invite-btn').style.display = 'none';
+}
+
+function showInviteBox() {
+  const box = document.getElementById('my-invite-box');
+  box.style.display = 'block';
+  box.innerHTML = `
+    <div class="invite-box">
+      <div style="font-size:12px;color:#185FA5;margin-bottom:6px;font-weight:500">Sizning taklif kodingiz:</div>
+      <div class="invite-code">${myCode}</div>
+      <div class="invite-hint">Do'stingizga bu kodni yuboring, u "Qo'shilish" bo'limiga kiriting</div>
+      <div class="copy-row">
+        <button class="btn btn-sm btn-blue" onclick="copyCode()">Nusxalash 📋</button>
+        <button class="btn btn-sm" onclick="shareInvite()">Ulashish 📤</button>
+      </div>
+    </div>
+    <div id="friends-list" style="margin-bottom:8px">${renderFriendsList()}</div>
+  `;
+}
+
+function renderFriendsList() {
+  if (!friends.length) return '';
+  return `<div style="font-size:12px;font-weight:500;color:#888;margin-bottom:6px">Do'stlaringiz:</div>` +
+    friends.map(f => `<span class="friend-tag"><span class="online-dot"></span>${f}</span>`).join('');
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(myCode).then(() => showToast('Kod nusxalandi! ✓'));
+}
+
+function shareInvite() {
+  const nm = document.getElementById('pname').value.trim() || 'men';
+  const txt = `${nm} sizni MathRace ga taklif qilmoqda! 🧮\nTaklif kodi: ${myCode}\nKodni kiriting va bellashing!`;
+  if (navigator.share) {
+    navigator.share({title:'MathRace taklifi', text:txt}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(txt).then(() => showToast('Taklif nusxalandi! 📋'));
+  }
+}
+
+function joinCode() {
+  const code = document.getElementById('join-code-inp').value.trim().toUpperCase();
+  const nm = document.getElementById('pname').value.trim();
+  const st = document.getElementById('join-status');
+  if (!nm) { showToast('Avval ismingizni kiriting!'); return; }
+  if (code.length < 4) { st.textContent = '❌ Kamida 4 ta belgi kiriting'; return; }
+  if (invites[code]) {
+    const owner = invites[code].owner;
+    if (!friends.includes(owner)) friends.push(owner);
+    if (!friends.includes(nm)) friends.push(nm);
+    save();
+    st.textContent = `✅ ${owner} bilan do'stlashingiz bog'landi!`;
+    st.style.color = '#085041';
+    document.getElementById('join-code-inp').value = '';
+    showToast(`${owner} bilan bellashishingiz mumkin! 🎉`);
+    if (myCode && document.getElementById('my-invite-box').style.display !== 'none') {
+      document.getElementById('friends-list').innerHTML = renderFriendsList();
+    }
+    renderLb('all');
+  } else {
+    st.textContent = '❌ Bu kod topilmadi. Tekshirib qayta urinib ko\'ring';
+    st.style.color = '#A32D2D';
+  }
+}
+
+function selD(el, d) {
+  document.querySelectorAll('.dc').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel'); diff = d;
+}
+
+function r(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+function makeQ(text, ans) {
+  ans = Math.round(ans * 100) / 100;
+  const opts = new Set([ans]);
+  let tries = 0;
+  while (opts.size < 4 && tries < 50) {
+    tries++;
+    const d = r(1, Math.max(3, Math.abs(Math.round(ans * 0.3)) || 5));
+    opts.add(ans + (Math.random() > 0.5 ? d : -d));
+  }
+  return { text, ans, opts: [...opts].sort(() => Math.random()-0.5) };
+}
+
+function genEasy() {
+  const op = r(0,1)?'+':'-';
+  let a=r(1,20), b=r(1,20);
+  if(op==='-'&&b>a)[a,b]=[b,a];
+  return makeQ(`${a} ${op} ${b} = ?`, op==='+'?a+b:a-b);
+}
+function genMed() {
+  const t = r(0,3);
+  if(t===0){const a=r(2,12),b=r(2,12);return makeQ(`${a} × ${b} = ?`,a*b);}
+  if(t===1){const b=r(2,12),a=b*r(2,10);return makeQ(`${a} ÷ ${b} = ?`,a/b);}
+  if(t===2){const a=r(10,50),b=r(10,50);return makeQ(`${a} + ${b} = ?`,a+b);}
+  let a=r(20,80),b=r(10,40);if(b>a)[a,b]=[b,a];return makeQ(`${a} − ${b} = ?`,a-b);
+}
+function genHard() {
+  const t=r(0,4);
+  if(t===0){const a=r(2,15),b=r(2,15),c=r(1,10);return makeQ(`${a}×${b}+${c}=?`,a*b+c);}
+  if(t===1){const n=r(2,12);return makeQ(`${n}² = ?`,n*n);}
+  if(t===2){const sq=[4,9,16,25,36,49,64,81,100,121,144];const n=sq[r(0,sq.length-1)];return makeQ(`√${n} = ?`,Math.sqrt(n));}
+  if(t===3){const a=r(2,9),b=r(2,9);return makeQ(`${a}% dan ${b*10} = ?`,Math.round(a*b*10/100));}
+  const a=r(2,20),b=r(2,20),c=r(2,10);const ans=a*b-c;if(ans<1)return genHard();
+  return makeQ(`${a}×${b}−${c}=?`,ans);
+}
+
+function genQs(d) {
+  const fn = d==='easy'?genEasy:d==='medium'?genMed:genHard;
+  return Array.from({length:10},fn);
+}
+
+function startGame() {
+  const nm = document.getElementById('pname').value.trim();
+  if (!nm) { showToast('Ismingizni kiriting!'); document.getElementById('pname').focus(); return; }
+  pname = nm; qs = genQs(diff); qi=0; score=0; cor=0; wrg=0;
+  startT = Date.now();
+  showS('s-quiz'); loadQ();
+}
+
+function loadQ() {
+  if (qi >= qs.length) { endGame(); return; }
+  answered = false;
+  const q = qs[qi];
+  document.getElementById('qnum').textContent = `${qi+1}/10`;
+  document.getElementById('prog-bar').style.width = `${(qi+1)*10}%`;
+  document.getElementById('live-sc').textContent = `${score} ball`;
+  document.getElementById('qtxt').textContent = q.text;
+  const tl = diff==='easy'?15:diff==='medium'?12:10;
+  document.getElementById('qhint').textContent = `Vaqt: ${tl} soniya`;
+  document.getElementById('fbmsg').textContent = '';
+  document.getElementById('fbmsg').className = 'fbmsg';
+  document.getElementById('opts').innerHTML = q.opts.map(o =>
+    `<button class="obtn" onclick="answer(this,${o},${q.ans})">${o}</button>`
+  ).join('');
+  startTimer(tl);
+}
+
+function startTimer(s) {
+  clearInterval(tInt); timeLeft = s;
+  const bar = document.getElementById('timer-bar');
+  bar.style.transition='none'; bar.style.width='100%'; bar.style.background='#378ADD';
+  requestAnimationFrame(() => {
+    bar.style.transition=`width ${s}s linear, background ${s}s linear`;
+    bar.style.width='0%'; bar.style.background='#E24B4A';
+  });
+  tInt = setInterval(() => { timeLeft--; if(timeLeft<=0){clearInterval(tInt);if(!answered)timeOut();} }, 1000);
+}
+
+function timeOut() {
+  answered=true; wrg++;
+  const fb=document.getElementById('fbmsg');
+  fb.textContent=`⏰ Vaqt! To'g'ri: ${qs[qi].ans}`;
+  fb.className='fbmsg no';
+  document.querySelectorAll('.obtn').forEach(b=>b.disabled=true);
+  setTimeout(()=>{qi++;loadQ();},1200);
+}
+
+function answer(btn, chosen, ans) {
+  if(answered) return;
+  answered=true; clearInterval(tInt);
+  const ok = Math.abs(chosen-ans)<0.001;
+  const fb=document.getElementById('fbmsg');
+  document.querySelectorAll('.obtn').forEach(b=>{
+    b.disabled=true;
+    if(Math.abs(parseFloat(b.textContent)-ans)<0.001) b.classList.add('correct');
+  });
+  if(ok){
+    btn.classList.add('correct');
+    const bonus=diff==='easy'?50:diff==='medium'?100:150;
+    const sp=Math.max(0,timeLeft)*(diff==='easy'?3:diff==='medium'?5:8);
+    const g=bonus+sp; score+=g; cor++;
+    fb.textContent=`✓ To'g'ri! +${g} ball`; fb.className='fbmsg ok';
+  } else {
+    btn.classList.add('wrong'); wrg++;
+    fb.textContent=`✗ Noto'g'ri. To'g'ri: ${ans}`; fb.className='fbmsg no';
+  }
+  document.getElementById('live-sc').textContent=`${score} ball`;
+  setTimeout(()=>{qi++;loadQ();},1300);
+}
+
+function endGame() {
+  const elapsed=Math.round((Date.now()-startT)/1000);
+  const entry={name:pname,diff,score,cor,wrg,time:elapsed,date:Date.now()};
+  scores.push(entry); save();
+  let filt=[...scores].filter(s=>s.diff===diff).sort((a,b)=>b.score-a.score);
+  const rank=filt.findIndex(s=>s.name===pname&&s.score===score&&s.date===entry.date)+1;
+  const icons=['🏆','🥇','🥈','🎯','⭐'];
+  document.getElementById('res-icon').textContent=rank<=3?icons[rank-1]:score>=500?'🎯':'⭐';
+  document.getElementById('res-score').textContent=score;
+  document.getElementById('st-c').textContent=cor;
+  document.getElementById('st-w').textContent=wrg;
+  document.getElementById('st-t').textContent=`${elapsed}s`;
+  document.getElementById('st-r').textContent=`#${rank}`;
+  const top8=filt.slice(0,8);
+  document.getElementById('res-lb').innerHTML=top8.map((s,i)=>lbRowHtml(s,i,pname)).join('');
+  const frdScores=scores.filter(s=>friends.includes(s.name)||s.name===pname).sort((a,b)=>b.score-a.score);
+  if(frdScores.length>1){
+    document.getElementById('res-friends-lb').innerHTML=`<div class="lb-title">👥 Do'stlar reytingi</div>`+frdScores.slice(0,6).map((s,i)=>lbRowHtml(s,i,pname)).join('');
+  }
+  showS('s-result');
+}
+
+function lbRowHtml(s, i, me) {
+  const ci=(s.name.charCodeAt(0)||0)%AVBG.length;
+  const isMe=s.name===me;
+  const ri=i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
+  const dc=DCOLORS[s.diff]||DCOLORS.easy;
+  return `<div class="lb-row${isMe?' me':''}">
+    <span class="lb-rank">${ri}</span>
+    <div class="lb-av" style="background:${AVBG[ci]};color:${AVTX[ci]}">${s.name.slice(0,2).toUpperCase()}</div>
+    <span class="lb-name">${s.name}${isMe?' (siz)':''}</span>
+    <span class="lb-dtag" style="background:${dc[0]};color:${dc[1]}">${DLABEL[s.diff]}</span>
+    <span class="lb-time">${s.time}s</span>
+    <span class="lb-sc">${s.score}</span>
+  </div>`;
+}
+
+function lbTab(el, filter) {
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); renderLb(filter);
+}
+
+function renderLb(filter) {
+  const container=document.getElementById('home-lb');
+  let filt;
+  if(filter==='friends'){
+    const nm=document.getElementById('pname').value.trim();
+    const allFriends=[...friends];
+    if(nm) allFriends.push(nm);
+    filt=scores.filter(s=>allFriends.includes(s.name));
+    if(!filt.length){
+      container.innerHTML='<div class="empty">Do\'stlaringiz hali o\'ynamagan.<br>Taklif kodi yuborib, bellashing! 🚀</div>';
+      return;
+    }
+  } else if(filter==='all'){
+    filt=[...scores];
+  } else {
+    filt=scores.filter(s=>s.diff===filter);
+  }
+  filt.sort((a,b)=>b.score-a.score);
+  const top=filt.slice(0,10);
+  if(!top.length){container.innerHTML='<div class="empty">Hali o\'ynalmagan!</div>';return;}
+  const nm=document.getElementById('pname').value.trim();
+  container.innerHTML=top.map((s,i)=>lbRowHtml(s,i,nm)).join('');
+}
+
+function playAgain() {
+  qs=genQs(diff); qi=0; score=0; cor=0; wrg=0; startT=Date.now();
+  showS('s-quiz'); loadQ();
+}
+
+function goHome() { showS('s-home'); renderLb('all'); }
+
+function shareScore() {
+  const nm=document.getElementById('pname').value.trim()||pname;
+  let invite='';
+  if(myCode) invite=`\nMenga qarshi o'ynash uchun kod: ${myCode}`;
+  const txt=`${nm} MathRace da ${score} ball to'pladi! 🧮\n(${DLABEL[diff]}, ${cor}/10 to'g'ri)${invite}`;
+  if(navigator.share){
+    navigator.share({title:'MathRace',text:txt}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(txt).then(()=>showToast('Nusxalandi! 📋'));
+  }
+}
+
+function showS(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+load();
+renderLb('all');
+if(myCode) showInviteBox();
+
+document.getElementById('pname').addEventListener('keydown', e=>{
+  if(e.key==='Enter') startGame();
+});
+document.getElementById('join-code-inp').addEventListener('keydown', e=>{
+  if(e.key==='Enter') joinCode();
+});
+</script>
+</body>
+          </html>
