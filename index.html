@@ -4,233 +4,878 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MathRace 🧮</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
 <style>
+/* ═══════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════ */
 :root {
-  --bg:#0a0a0f;--bg2:#13131a;--bg3:#1c1c27;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
-  --text:#f0f0f8;--text2:#8888aa;--text3:#44445a;
-  --accent:#7c6fff;--accent2:#5c4fff;--aglow:rgba(124,111,255,0.22);
-  --green:#22d989;--red:#ff5b5b;--gold:#fbbf24;
-  --r:14px;--rs:9px;
-  --sh:0 8px 32px rgba(0,0,0,0.45);--shs:0 2px 12px rgba(0,0,0,0.3);
-  --fh:'Syne',sans-serif;--fb:'DM Sans',sans-serif;
-  --tr:0.22s cubic-bezier(0.4,0,0.2,1);
+  --c0: #08080f;
+  --c1: #0e0e1a;
+  --c2: #161625;
+  --c3: #1e1e30;
+  --c4: #2a2a42;
+  --t0: #f2f2ff;
+  --t1: #9090b8;
+  --t2: #52527a;
+  --t3: #2e2e4a;
+  --a:  #6c63ff;
+  --a2: #8a83ff;
+  --ag: rgba(108,99,255,.18);
+  --g:  #10e888;
+  --r:  #ff4d6d;
+  --y:  #ffc22e;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --font: 'Space Grotesk', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --ease: cubic-bezier(.4,0,.2,1);
+  --spring: cubic-bezier(.34,1.56,.64,1);
 }
-[data-theme="light"]{
-  --bg:#f0f0f8;--bg2:#ffffff;--bg3:#e6e6f2;
-  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);
-  --text:#0a0a1a;--text2:#555577;--text3:#9999bb;
-  --accent:#5c4fff;--accent2:#4030ee;--aglow:rgba(92,79,255,0.15);
-  --green:#16a34a;--red:#dc2626;
-  --sh:0 8px 32px rgba(0,0,0,0.1);--shs:0 2px 12px rgba(0,0,0,0.07);
+[data-theme="light"] {
+  --c0: #f0f0fa;
+  --c1: #ffffff;
+  --c2: #eaeaf8;
+  --c3: #e0e0f2;
+  --c4: #d0d0e8;
+  --t0: #0a0a18;
+  --t1: #44446a;
+  --t2: #8888aa;
+  --t3: #ccccdd;
+  --ag: rgba(108,99,255,.10);
+  --g: #16a34a;
+  --r: #dc2626;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center;padding:1rem 1rem 80px;transition:background var(--tr),color var(--tr);overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 15% 15%,var(--aglow),transparent 65%),radial-gradient(ellipse 40% 40% at 85% 85%,rgba(34,217,137,0.07),transparent 65%);pointer-events:none;z-index:0;transition:background var(--tr)}
-.app{max-width:620px;width:100%;position:relative;z-index:1}
-.screen{display:none;animation:fadeUp .35s ease both}.screen.active{display:block}
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
-/* inputs */
-input,select{width:100%;padding:11px 14px;border-radius:var(--rs);border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:14px;font-family:var(--fb);outline:none;transition:border var(--tr),box-shadow var(--tr),background var(--tr)}
-input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--aglow)}
-input::placeholder{color:var(--text3)}
-select{cursor:pointer;width:auto;padding:7px 12px;font-size:13px}
+/* ═══════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+html { -webkit-tap-highlight-color: transparent }
+body {
+  font-family: var(--font);
+  background: var(--c0);
+  color: var(--t0);
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: 1rem 1rem 84px;
+  transition: background .3s, color .3s;
+  overflow-x: hidden;
+}
 
-/* buttons */
-.btn{padding:10px 18px;border-radius:var(--rs);border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:13px;font-family:var(--fb);font-weight:600;cursor:pointer;transition:all var(--tr);white-space:nowrap;position:relative;overflow:hidden}
-.btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
-.btn:active{transform:translateY(0)}
-.btn-a{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 20px var(--aglow)}
-.btn-a:hover{background:var(--accent2);border-color:var(--accent2);box-shadow:0 6px 28px var(--aglow)}
-.btn-g{background:transparent;border-color:var(--border2)}
-.btn-g:hover{background:var(--bg3)}
-.btn-f{width:100%;padding:13px;font-size:15px;font-weight:700}
-.btn-s{padding:7px 13px;font-size:12px}
-.btn-danger{background:rgba(255,91,91,0.1);border-color:rgba(255,91,91,0.25);color:var(--red)}
-.btn-danger:hover{background:rgba(255,91,91,0.2)}
+/* Background glow */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 10% 5%, rgba(108,99,255,.14) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 45% at 90% 95%, rgba(16,232,136,.08) 0%, transparent 55%);
+  pointer-events: none;
+  z-index: 0;
+  transition: background .3s;
+}
 
-/* card */
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:12px;box-shadow:var(--shs);transition:background var(--tr),border-color var(--tr);position:relative;overflow:hidden}
-.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent)}
+.wrap { max-width: 600px; width: 100%; position: relative; z-index: 1 }
 
-/* label */
-.lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px;font-family:var(--fh)}
-.div{height:1px;background:var(--border);margin:14px 0}
-.row{display:flex;gap:8px;margin-bottom:10px}.row input{flex:1}
+/* ═══════════════════════════════════════
+   SCREENS
+═══════════════════════════════════════ */
+.screen { display: none }
+.screen.on {
+  display: block;
+  animation: up .32s var(--ease) both;
+}
+@keyframes up {
+  from { opacity: 0; transform: translateY(14px) }
+  to   { opacity: 1; transform: translateY(0) }
+}
 
-/* ── AUTH ── */
-.auth-hero{text-align:center;padding:2rem 0 1.5rem}
-.auth-logo{font-size:52px;display:block;animation:float 3s ease-in-out infinite;margin-bottom:10px}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.auth-title{font-family:var(--fh);font-size:34px;font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,var(--text) 40%,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.auth-sub{font-size:13px;color:var(--text2);margin-top:6px}
-.auth-tabs{display:flex;background:var(--bg3);border-radius:var(--rs);padding:4px;margin-bottom:16px}
-.auth-tab{flex:1;padding:9px;border-radius:7px;border:none;background:transparent;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;transition:all var(--tr);font-family:var(--fb)}
-.auth-tab.active{background:var(--bg2);color:var(--text);box-shadow:var(--shs)}
-.auth-field{margin-bottom:10px}
-.auth-field label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px}
-.auth-err{background:rgba(255,91,91,0.1);border:1px solid rgba(255,91,91,0.2);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:10px;display:none}
-.auth-ok{background:rgba(34,217,137,0.1);border:1px solid rgba(34,217,137,0.2);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:var(--green);margin-bottom:10px;display:none}
+/* ═══════════════════════════════════════
+   COMPONENTS
+═══════════════════════════════════════ */
 
-/* ── HOME HEADER ── */
-.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:12px 16px;background:var(--bg2);border-radius:var(--r);border:1px solid var(--border)}
-.hdr-user{display:flex;align-items:center;gap:10px}
-.hdr-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;font-family:var(--fh);flex-shrink:0;border:2px solid var(--accent)}
-.hdr-name{font-size:14px;font-weight:700;font-family:var(--fh)}
-.hdr-sub{font-size:11px;color:var(--text2)}
-.hdr-btns{display:flex;gap:6px}
+/* Input */
+input {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--c2);
+  border: 1.5px solid var(--c4);
+  border-radius: var(--radius);
+  color: var(--t0);
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  transition: border .18s, box-shadow .18s;
+}
+input:focus {
+  border-color: var(--a);
+  box-shadow: 0 0 0 3px var(--ag);
+}
+input::placeholder { color: var(--t2) }
+input.big {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--a2);
+}
 
-/* ── DIFF ── */
-.diff-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
-.diff-card{border:1.5px solid var(--border);border-radius:var(--rs);padding:14px 8px;text-align:center;cursor:pointer;transition:all var(--tr);background:var(--bg3);position:relative;overflow:hidden}
-.diff-card:hover{border-color:var(--border2);transform:translateY(-2px)}
-.diff-card.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 4px 20px var(--aglow)}
-.diff-card.sel::after{content:'';position:absolute;inset:0;background:var(--aglow);pointer-events:none}
-.d-icon{font-size:22px;margin-bottom:5px}
-.d-name{font-size:12px;font-weight:700;font-family:var(--fh)}
-.d-desc{font-size:10px;color:var(--text2);margin-top:2px}
+/* Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--c4);
+  background: var(--c2);
+  color: var(--t0);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s var(--ease);
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+.btn:hover { filter: brightness(1.12); transform: translateY(-1px) }
+.btn:active { transform: translateY(0) scale(.98) }
 
-/* ── INVITE ── */
-.inv-box{background:linear-gradient(135deg,rgba(124,111,255,0.12),rgba(124,111,255,0.04));border:1px solid rgba(124,111,255,0.2);border-radius:var(--rs);padding:1rem;margin-bottom:10px}
-.inv-code{font-size:30px;font-weight:900;letter-spacing:8px;color:var(--accent);text-align:center;padding:10px;font-family:var(--fh)}
-.inv-hint{font-size:11px;color:var(--text2);text-align:center;margin-top:4px}
-.inv-btns{display:flex;gap:8px;justify-content:center;margin-top:10px}
-.join-row{display:flex;gap:8px;align-items:center}.join-row input{flex:1;letter-spacing:3px;font-weight:700;text-transform:uppercase}
-.j-ok{font-size:12px;color:var(--green);margin-top:6px;font-weight:600}
-.j-err{font-size:12px;color:var(--red);margin-top:6px;font-weight:600}
+.btn-primary {
+  background: var(--a);
+  border-color: var(--a);
+  color: #fff;
+  box-shadow: 0 4px 20px var(--ag);
+}
+.btn-primary:hover { background: var(--a2); border-color: var(--a2); box-shadow: 0 6px 28px var(--ag) }
 
-/* ── LEADERBOARD ── */
-.lb-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.lb-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(34,217,137,0.1);border:1px solid rgba(34,217,137,0.2);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--green)}
-.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.3;transform:scale(0.75)}}
-.lb-tabs{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
-.lb-tab{padding:5px 13px;border-radius:20px;border:1px solid var(--border);font-size:11px;cursor:pointer;color:var(--text2);background:transparent;font-weight:600;font-family:var(--fb);transition:all var(--tr)}
-.lb-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.lb-count{font-size:11px;color:var(--text2);text-align:center;margin-bottom:10px}
-.top3{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
-.t3c{flex:1;max-width:120px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:12px 8px;text-align:center;transition:all var(--tr);animation:fadeUp .4s ease both}
-.t3c:nth-child(1){animation-delay:.05s}.t3c:nth-child(2){animation-delay:.1s}.t3c:nth-child(3){animation-delay:.15s}
-.t3c.gold{border-color:rgba(251,191,36,0.35);background:rgba(251,191,36,0.07)}
-.t3c.silver{border-color:rgba(180,180,180,0.35);background:rgba(180,180,180,0.07)}
-.t3c.bronze{border-color:rgba(180,120,60,0.35);background:rgba(180,120,60,0.07)}
-.t3-med{font-size:22px;margin-bottom:4px}
-.t3-nm{font-size:11px;font-weight:700;font-family:var(--fh);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.t3-sc{font-size:16px;font-weight:800;font-family:var(--fh)}
-.t3-sub{font-size:10px;color:var(--text2);margin-top:2px}
-.lb-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--border);margin-bottom:5px;transition:all var(--tr);animation:fadeUp .3s ease both}
-.lb-row:hover{border-color:var(--border2);transform:translateX(2px)}
-.lb-row.me{border-color:var(--accent);background:rgba(124,111,255,0.08)}
-.lb-rk{font-size:13px;font-weight:700;min-width:22px;color:var(--text2);font-family:var(--fh)}
-.lb-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;font-family:var(--fh)}
-.lb-nm{flex:1;font-size:13px;font-weight:600}
-.lb-df{font-size:10px;padding:2px 8px;border-radius:8px;flex-shrink:0;font-weight:600}
-.lb-tm{font-size:11px;color:var(--text2);flex-shrink:0}
-.lb-sc{font-size:14px;font-weight:800;flex-shrink:0;font-family:var(--fh)}
-.lb-empty{text-align:center;padding:2rem;color:var(--text2);font-size:13px;line-height:2}
-.lb-loading{text-align:center;padding:1.5rem;color:var(--text2);font-size:13px}
+.btn-ghost { background: transparent; border-color: var(--c4) }
+.btn-ghost:hover { background: var(--c2) }
 
-/* ── QUIZ ── */
-.qhdr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.pw{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
-.pb{height:100%;background:var(--accent);border-radius:3px;transition:width .4s ease;box-shadow:0 0 8px var(--aglow)}
-.qnum{font-size:12px;color:var(--text2);min-width:44px;font-weight:600;font-family:var(--fh)}
-.sbadge{font-size:12px;font-weight:700;color:var(--accent);background:rgba(124,111,255,0.12);border:1px solid rgba(124,111,255,0.2);padding:4px 11px;border-radius:20px;font-family:var(--fh)}
-.tw{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:10px}
-.tb{height:100%;border-radius:2px}
-.qcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:2rem 1.5rem;text-align:center;margin-bottom:12px;box-shadow:var(--shs);position:relative;overflow:hidden;animation:fadeUp .3s ease}
-.qcard::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,var(--aglow),transparent 70%);pointer-events:none}
-.qtext{font-size:32px;font-weight:800;font-family:var(--fh);letter-spacing:-.5px;margin-bottom:6px}
-.qhint{font-size:11px;color:var(--text2)}
-.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.obtn{padding:16px;border-radius:var(--rs);border:1.5px solid var(--border);background:var(--bg2);font-size:20px;font-weight:800;cursor:pointer;transition:all var(--tr);color:var(--text);font-family:var(--fh);position:relative;overflow:hidden}
-.obtn:hover:not(:disabled){border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 16px var(--aglow)}
-.obtn.correct{border-color:var(--green)!important;background:rgba(34,217,137,0.12)!important;color:var(--green)!important;box-shadow:0 0 20px rgba(34,217,137,0.2)!important;animation:pop .3s ease}
-@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
-.obtn.wrong{border-color:var(--red)!important;background:rgba(255,91,91,0.1)!important;color:var(--red)!important}
-.obtn:disabled{cursor:default}
-.fbmsg{font-size:13px;padding:10px 14px;border-radius:var(--rs);margin-bottom:10px;text-align:center;min-height:40px;font-weight:600;transition:all var(--tr)}
-.fbmsg.ok{background:rgba(34,217,137,0.1);color:var(--green);border:1px solid rgba(34,217,137,0.2)}
-.fbmsg.no{background:rgba(255,91,91,0.1);color:var(--red);border:1px solid rgba(255,91,91,0.2)}
+.btn-green {
+  background: rgba(16,232,136,.1);
+  border-color: rgba(16,232,136,.28);
+  color: var(--g);
+}
+.btn-green:hover { background: rgba(16,232,136,.18) }
 
-/* ── RESULT ── */
-.rc{text-align:center;padding:1rem 0}
-.ri{font-size:56px;display:block;margin-bottom:12px;animation:pop .5s cubic-bezier(.34,1.56,.64,1) both}
-.rs{font-size:52px;font-weight:800;font-family:var(--fh);letter-spacing:-2px;background:linear-gradient(135deg,var(--text),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:fadeUp .4s .1s ease both}
-.rl{font-size:14px;color:var(--text2);margin-bottom:1.25rem;animation:fadeUp .4s .15s ease both}
-.srow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:1.25rem}
-.scard{background:var(--bg3);border-radius:var(--rs);padding:12px 18px;text-align:center;min-width:72px;border:1px solid var(--border);animation:fadeUp .4s ease both}
-.scard:nth-child(1){animation-delay:.1s}.scard:nth-child(2){animation-delay:.15s}.scard:nth-child(3){animation-delay:.2s}.scard:nth-child(4){animation-delay:.25s}
-.sv{font-size:22px;font-weight:800;font-family:var(--fh)}
-.sl{font-size:11px;color:var(--text2);margin-top:2px}
-.share-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:1rem}
+.btn-danger {
+  background: rgba(255,77,109,.08);
+  border-color: rgba(255,77,109,.22);
+  color: var(--r);
+}
+.btn-danger:hover { background: rgba(255,77,109,.16) }
 
-/* ── SETTINGS ── */
-.set-title{font-family:var(--fh);font-size:22px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.set-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
-.set-row:last-child{border-bottom:none}
-.set-nm{font-size:14px;font-weight:600}
-.set-ds{font-size:11px;color:var(--text2);margin-top:2px}
-.toggle{width:44px;height:24px;border-radius:12px;background:var(--bg3);border:1.5px solid var(--border2);cursor:pointer;position:relative;transition:background var(--tr);flex-shrink:0}
-.toggle.on{background:var(--accent);border-color:var(--accent)}
-.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform var(--tr);box-shadow:0 1px 4px rgba(0,0,0,0.3)}
-.toggle.on::after{transform:translateX(20px)}
-.user-profile{background:linear-gradient(135deg,rgba(124,111,255,0.15),rgba(124,111,255,0.04));border:1px solid rgba(124,111,255,0.2);border-radius:var(--r);padding:1.5rem;text-align:center;margin-bottom:14px}
-.up-av{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;font-family:var(--fh);margin:0 auto 12px;border:3px solid var(--accent);box-shadow:0 0 20px var(--aglow)}
-.up-name{font-size:20px;font-weight:800;font-family:var(--fh)}
-.up-sub{font-size:12px;color:var(--text2);margin-top:4px}
-.up-stats{display:flex;gap:14px;justify-content:center;margin-top:14px;flex-wrap:wrap}
-.ust{text-align:center}
-.ust-v{font-size:18px;font-weight:800;font-family:var(--fh);color:var(--accent)}
-.ust-l{font-size:10px;color:var(--text2);margin-top:2px}
+.btn-full { width: 100%; padding: 13px; font-size: 15px; font-weight: 700 }
+.btn-sm { padding: 7px 13px; font-size: 12px }
 
-/* ── NAV ── */
-.nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);display:none;justify-content:center;z-index:100}
-.nav.show{display:flex}
-.nav-btn{flex:1;max-width:110px;padding:12px 8px;border:none;background:transparent;color:var(--text2);font-size:10px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--fb);transition:color var(--tr)}
-.nav-icon{font-size:20px;transition:transform var(--tr)}
-.nav-btn.active{color:var(--accent)}
-.nav-btn.active .nav-icon{transform:scale(1.15)}
+/* Card */
+.card {
+  background: var(--c1);
+  border: 1px solid rgba(255,255,255,.055);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+  transition: background .3s, border-color .3s;
+}
+[data-theme="light"] .card { border-color: rgba(0,0,0,.07) }
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
+}
+[data-theme="light"] .card::before { background: linear-gradient(90deg, transparent, rgba(0,0,0,.07), transparent) }
 
-/* ── TOAST ── */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:11px 22px;border-radius:24px;font-size:13px;font-weight:600;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:999;box-shadow:var(--sh);white-space:nowrap}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* Label */
+.lbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--t2);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  margin-bottom: 8px;
+}
+.divider { height: 1px; background: var(--c3); margin: 14px 0 }
 
-/* spinners */
-.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* Spinner */
+.spin {
+  display: inline-block;
+  width: 15px; height: 15px;
+  border: 2px solid var(--c4);
+  border-top-color: var(--a);
+  border-radius: 50%;
+  animation: spin .65s linear infinite;
+  vertical-align: middle;
+  margin-right: 5px;
+}
+@keyframes spin { to { transform: rotate(360deg) } }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 88px;
+  left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: var(--c2);
+  border: 1px solid var(--c4);
+  color: var(--t0);
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 999;
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  transition: all .3s var(--spring);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0) }
+
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+.nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(14,14,26,.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255,255,255,.06);
+  display: none;
+  justify-content: center;
+  z-index: 100;
+}
+[data-theme="light"] .nav { background: rgba(255,255,255,.85) }
+.nav.on { display: flex }
+.nb {
+  flex: 1;
+  max-width: 110px;
+  padding: 12px 8px;
+  border: none;
+  background: transparent;
+  color: var(--t2);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font);
+  transition: color .18s;
+}
+.nb .ni { font-size: 21px; transition: transform .25s var(--spring) }
+.nb.on { color: var(--a) }
+.nb.on .ni { transform: scale(1.18) translateY(-1px) }
+
+/* ═══════════════════════════════════════
+   AUTH
+═══════════════════════════════════════ */
+.auth-hero {
+  text-align: center;
+  padding: 2.5rem 0 1.5rem;
+}
+.auth-emoji {
+  font-size: 56px;
+  display: inline-block;
+  margin-bottom: 14px;
+  animation: float 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 28px var(--ag));
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(-3deg) }
+  50%       { transform: translateY(-10px) rotate(3deg) }
+}
+.auth-title {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  background: linear-gradient(140deg, var(--t0) 30%, var(--a2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 6px;
+}
+.auth-sub { font-size: 13px; color: var(--t1) }
+
+.tabs-row {
+  display: flex;
+  background: var(--c2);
+  border-radius: var(--radius);
+  padding: 3px;
+  margin-bottom: 16px;
+}
+.tab-btn {
+  flex: 1;
+  padding: 9px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--t1);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all .18s;
+}
+.tab-btn.on {
+  background: var(--c1);
+  color: var(--t0);
+  box-shadow: 0 2px 10px rgba(0,0,0,.2);
+}
+
+.auth-field { margin-bottom: 10px }
+.auth-field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--t1);
+  margin-bottom: 5px;
+  letter-spacing: .4px;
+}
+.msg {
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 10px;
+  display: none;
+  font-weight: 500;
+}
+.msg-err { background: rgba(255,77,109,.1); border: 1px solid rgba(255,77,109,.2); color: var(--r) }
+.msg-ok  { background: rgba(16,232,136,.1); border: 1px solid rgba(16,232,136,.2); color: var(--g) }
+
+/* ═══════════════════════════════════════
+   HOME HEADER
+═══════════════════════════════════════ */
+.hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  background: var(--c1);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255,255,255,.055);
+  animation: up .35s var(--ease) both;
+}
+[data-theme="light"] .hdr { border-color: rgba(0,0,0,.07) }
+.hdr-left { display: flex; align-items: center; gap: 10px }
+.avi {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  border: 2px solid var(--a);
+  box-shadow: 0 0 14px var(--ag);
+  flex-shrink: 0;
+}
+.hdr-name { font-size: 14px; font-weight: 700 }
+.hdr-sub  { font-size: 11px; color: var(--t1); margin-top: 1px }
+
+/* ═══════════════════════════════════════
+   DIFF GRID
+═══════════════════════════════════════ */
+.diff-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 10px 0 }
+.dc {
+  background: var(--c2);
+  border: 1.5px solid var(--c3);
+  border-radius: var(--radius);
+  padding: 14px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .18s var(--ease);
+  position: relative;
+  overflow: hidden;
+}
+.dc:hover { border-color: var(--c4); transform: translateY(-2px) }
+.dc.on {
+  border-color: var(--a);
+  background: rgba(108,99,255,.08);
+  box-shadow: 0 0 0 1px var(--a), 0 4px 20px var(--ag);
+}
+.dc-icon { font-size: 22px; display: block; margin-bottom: 5px }
+.dc-name { font-size: 12px; font-weight: 700 }
+.dc-desc { font-size: 10px; color: var(--t1); margin-top: 2px }
+
+/* ═══════════════════════════════════════
+   FRIENDS SCREEN
+═══════════════════════════════════════ */
+.f-hero {
+  text-align: center;
+  padding: 1.5rem 0 1rem;
+}
+.f-emoji {
+  font-size: 48px;
+  display: inline-block;
+  margin-bottom: 10px;
+  animation: float 3s ease-in-out infinite;
+}
+.f-title { font-size: 24px; font-weight: 700; letter-spacing: -.5px }
+.f-sub   { font-size: 13px; color: var(--t1); margin-top: 5px }
+
+.room-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 }
+.rcard {
+  background: var(--c1);
+  border: 1.5px solid var(--c3);
+  border-radius: var(--radius-lg);
+  padding: 22px 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .22s var(--ease);
+}
+.rcard:hover { transform: translateY(-3px) }
+.rcard.create:hover { border-color: var(--a); box-shadow: 0 10px 30px var(--ag) }
+.rcard.joinn:hover  { border-color: var(--g); box-shadow: 0 10px 30px rgba(16,232,136,.14) }
+.rcard-icon  { font-size: 32px; display: block; margin-bottom: 8px }
+.rcard-title { font-size: 14px; font-weight: 700 }
+.rcard-sub   { font-size: 11px; color: var(--t1); margin-top: 3px }
+
+/* ═══════════════════════════════════════
+   LOBBY
+═══════════════════════════════════════ */
+.lobby-code-card {
+  background: linear-gradient(135deg, rgba(108,99,255,.12), rgba(108,99,255,.04));
+  border: 1px solid rgba(108,99,255,.22);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.room-code-display {
+  font-family: var(--mono);
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: 8px;
+  color: var(--a2);
+  display: block;
+  padding: 12px;
+  background: var(--c2);
+  border-radius: 10px;
+  margin: 10px 0;
+  animation: glow 2.2s ease-in-out infinite;
+}
+@keyframes glow {
+  0%, 100% { text-shadow: 0 0 10px var(--ag) }
+  50%       { text-shadow: 0 0 30px var(--ag), 0 0 60px var(--ag) }
+}
+.code-btns { display: flex; gap: 8px; justify-content: center; margin-top: 8px }
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--c2);
+  border-radius: 10px;
+  border: 1px solid var(--c3);
+  margin-bottom: 6px;
+  animation: up .3s var(--ease) both;
+}
+.p-avi {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  flex-shrink: 0;
+}
+.p-name { flex: 1; font-size: 13px; font-weight: 600 }
+.p-tag {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-weight: 700;
+}
+.tag-host  { background: rgba(255,194,46,.12); color: var(--y); border: 1px solid rgba(255,194,46,.22) }
+.tag-ready { background: rgba(16,232,136,.1);  color: var(--g); border: 1px solid rgba(16,232,136,.2) }
+
+.dots { display: inline-flex; gap: 4px; margin-left: 5px }
+.dots span {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--t1);
+  animation: dt 1.2s infinite;
+}
+.dots span:nth-child(2) { animation-delay: .2s }
+.dots span:nth-child(3) { animation-delay: .4s }
+@keyframes dt {
+  0%, 80%, 100% { transform: scale(.5); opacity: .4 }
+  40%           { transform: scale(1); opacity: 1 }
+}
+
+/* ═══════════════════════════════════════
+   LEADERBOARD
+═══════════════════════════════════════ */
+.lb-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px }
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16,232,136,.09);
+  border: 1px solid rgba(16,232,136,.2);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--g);
+}
+.live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--g);
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1) }
+  50%       { opacity: .3; transform: scale(.7) }
+}
+
+.lb-tabs { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap }
+.lb-tab {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--c3);
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--t1);
+  background: transparent;
+  font-weight: 600;
+  font-family: var(--font);
+  transition: all .18s;
+}
+.lb-tab.on { background: var(--a); color: #fff; border-color: var(--a) }
+
+.lb-count { font-size: 11px; color: var(--t1); text-align: center; margin-bottom: 10px }
+
+/* Top 3 */
+.top3 { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px }
+.t3 {
+  flex: 1;
+  max-width: 118px;
+  background: var(--c2);
+  border: 1px solid var(--c3);
+  border-radius: var(--radius);
+  padding: 12px 8px;
+  text-align: center;
+  animation: up .4s var(--ease) both;
+}
+.t3:nth-child(1) { animation-delay: .05s }
+.t3:nth-child(2) { animation-delay: .10s }
+.t3:nth-child(3) { animation-delay: .15s }
+.t3.gold   { border-color: rgba(255,194,46,.3);  background: rgba(255,194,46,.06) }
+.t3.silver { border-color: rgba(180,180,180,.3); background: rgba(180,180,180,.06) }
+.t3.bronze { border-color: rgba(180,120,60,.3);  background: rgba(180,120,60,.06) }
+.t3-med { font-size: 22px; margin-bottom: 4px }
+.t3-nm  { font-size: 11px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.t3-sc  { font-size: 16px; font-weight: 700; font-family: var(--mono) }
+.t3-sub { font-size: 10px; color: var(--t1); margin-top: 2px }
+
+/* LB Row */
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--c2);
+  border: 1px solid var(--c3);
+  margin-bottom: 5px;
+  transition: all .18s;
+  animation: up .28s var(--ease) both;
+}
+.lb-row:hover { border-color: var(--c4); transform: translateX(3px) }
+.lb-row.me    { border-color: var(--a); background: rgba(108,99,255,.07) }
+.lb-rk  { font-size: 13px; font-weight: 700; min-width: 22px; color: var(--t1); font-family: var(--mono) }
+.lb-av  { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0 }
+.lb-nm  { flex: 1; font-size: 13px; font-weight: 600 }
+.lb-df  { font-size: 10px; padding: 2px 8px; border-radius: 8px; flex-shrink: 0; font-weight: 600 }
+.lb-tm  { font-size: 11px; color: var(--t1); flex-shrink: 0 }
+.lb-sc  { font-size: 14px; font-weight: 700; flex-shrink: 0; font-family: var(--mono) }
+.lb-empty { text-align: center; padding: 2rem; color: var(--t1); font-size: 13px; line-height: 2 }
+.lb-load  { text-align: center; padding: 1.5rem; color: var(--t1); font-size: 13px }
+
+/* ═══════════════════════════════════════
+   QUIZ
+═══════════════════════════════════════ */
+.q-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px }
+.prog-wrap { flex: 1; height: 6px; background: var(--c2); border-radius: 3px; overflow: hidden }
+.prog-bar  { height: 100%; background: var(--a); border-radius: 3px; transition: width .4s var(--ease); box-shadow: 0 0 10px var(--ag) }
+.q-num  { font-size: 12px; color: var(--t1); min-width: 44px; font-weight: 600; font-family: var(--mono) }
+.q-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--a2);
+  background: rgba(108,99,255,.1);
+  border: 1px solid rgba(108,99,255,.2);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: var(--mono);
+}
+
+.timer-wrap { height: 3px; background: var(--c2); border-radius: 2px; overflow: hidden; margin-bottom: 10px }
+.timer-bar  { height: 100%; border-radius: 2px; transition: width 1s linear, background 1s linear }
+
+.q-card {
+  background: var(--c1);
+  border: 1px solid rgba(255,255,255,.055);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+  animation: up .3s var(--ease);
+}
+[data-theme="light"] .q-card { border-color: rgba(0,0,0,.07) }
+.q-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, var(--ag), transparent 65%);
+  pointer-events: none;
+}
+.q-text { font-size: 34px; font-weight: 700; font-family: var(--mono); letter-spacing: -.5px; margin-bottom: 6px }
+.q-hint { font-size: 11px; color: var(--t1) }
+
+.opts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px }
+.opt {
+  padding: 17px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--c3);
+  background: var(--c1);
+  font-size: 21px;
+  font-weight: 700;
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: all .18s var(--ease);
+  color: var(--t0);
+}
+.opt:hover:not(:disabled) {
+  border-color: var(--a);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px var(--ag);
+}
+.opt.ok {
+  border-color: var(--g) !important;
+  background: rgba(16,232,136,.1) !important;
+  color: var(--g) !important;
+  box-shadow: 0 0 22px rgba(16,232,136,.2) !important;
+  animation: bounce .32s var(--spring);
+}
+@keyframes bounce { 0% { transform: scale(1) } 50% { transform: scale(1.06) } 100% { transform: scale(1) } }
+.opt.no {
+  border-color: var(--r) !important;
+  background: rgba(255,77,109,.08) !important;
+  color: var(--r) !important;
+}
+.opt:disabled { cursor: default }
+
+.fb-msg {
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  text-align: center;
+  min-height: 40px;
+  font-weight: 600;
+  transition: all .2s;
+}
+.fb-msg.ok { background: rgba(16,232,136,.09); color: var(--g); border: 1px solid rgba(16,232,136,.18) }
+.fb-msg.no { background: rgba(255,77,109,.09); color: var(--r); border: 1px solid rgba(255,77,109,.18) }
+
+/* Friends bar in quiz */
+.f-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px }
+.f-bar-item {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--c2);
+  border: 1px solid var(--c3);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px; font-weight: 600;
+}
+.f-bar-av { width: 17px; height: 17px; border-radius: 50%; font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center }
+.f-bar-sc { color: var(--a2); font-family: var(--mono) }
+
+/* ═══════════════════════════════════════
+   RESULT
+═══════════════════════════════════════ */
+.res-center { text-align: center; padding: 1rem 0 }
+.res-icon  { font-size: 58px; display: block; margin-bottom: 12px; animation: bounce .5s var(--spring) both }
+.res-score {
+  font-size: 54px;
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: -2px;
+  background: linear-gradient(135deg, var(--t0), var(--a2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: up .4s .1s var(--ease) both;
+}
+.res-label { font-size: 14px; color: var(--t1); margin-bottom: 1.25rem; animation: up .4s .15s var(--ease) both }
+
+.stats { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 1.25rem }
+.stat {
+  background: var(--c2);
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  text-align: center;
+  min-width: 70px;
+  border: 1px solid var(--c3);
+  animation: up .4s var(--ease) both;
+}
+.stat:nth-child(1) { animation-delay: .1s }
+.stat:nth-child(2) { animation-delay: .15s }
+.stat:nth-child(3) { animation-delay: .2s }
+.stat:nth-child(4) { animation-delay: .25s }
+.stat-v { font-size: 22px; font-weight: 700; font-family: var(--mono) }
+.stat-l { font-size: 11px; color: var(--t1); margin-top: 2px }
+
+.share-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 1rem }
+
+/* Friends result */
+.fr-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--c2);
+  border-radius: 10px;
+  border: 1px solid var(--c3);
+  margin-bottom: 6px;
+}
+.fr-row.win { border-color: rgba(255,194,46,.28); background: rgba(255,194,46,.05) }
+.fr-rank { font-size: 18px; min-width: 26px }
+.fr-av   { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0 }
+.fr-name { flex: 1; font-size: 13px; font-weight: 600 }
+.fr-sc   { font-size: 15px; font-weight: 700; font-family: var(--mono); color: var(--a2) }
+
+/* ═══════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════ */
+.set-title { font-size: 22px; font-weight: 700; margin-bottom: 16px }
+.set-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--c3) }
+.set-row:last-child { border-bottom: none }
+.set-name { font-size: 14px; font-weight: 600 }
+.set-desc { font-size: 11px; color: var(--t1); margin-top: 2px }
+
+.toggle {
+  width: 44px; height: 24px;
+  border-radius: 12px;
+  background: var(--c3);
+  border: 1.5px solid var(--c4);
+  cursor: pointer;
+  position: relative;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--a); border-color: var(--a) }
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform .2s var(--spring);
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.toggle.on::after { transform: translateX(20px) }
+
+select {
+  padding: 7px 12px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--c4);
+  background: var(--c2);
+  color: var(--t0);
+  font-size: 13px;
+  font-family: var(--font);
+  cursor: pointer;
+  outline: none;
+}
+
+.profile-card {
+  background: linear-gradient(135deg, rgba(108,99,255,.14), rgba(108,99,255,.04));
+  border: 1px solid rgba(108,99,255,.2);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.prof-avi {
+  width: 66px; height: 66px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 700;
+  margin: 0 auto 12px;
+  border: 3px solid var(--a);
+  box-shadow: 0 0 24px var(--ag);
+}
+.prof-name { font-size: 20px; font-weight: 700 }
+.prof-sub  { font-size: 12px; color: var(--t1); margin-top: 4px }
+.prof-stats { display: flex; gap: 14px; justify-content: center; margin-top: 14px; flex-wrap: wrap }
+.ps { text-align: center }
+.ps-v { font-size: 18px; font-weight: 700; font-family: var(--mono); color: var(--a2) }
+.ps-l { font-size: 10px; color: var(--t1); margin-top: 2px }
+
+/* Invite box */
+.inv-box {
+  background: linear-gradient(135deg, rgba(108,99,255,.12), rgba(108,99,255,.04));
+  border: 1px solid rgba(108,99,255,.2);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 10px;
+}
+.inv-code { font-size: 30px; font-weight: 800; letter-spacing: 8px; color: var(--a2); text-align: center; padding: 10px; font-family: var(--mono) }
+.inv-hint { font-size: 11px; color: var(--t1); text-align: center; margin-top: 4px }
+.inv-btns { display: flex; gap: 8px; justify-content: center; margin-top: 10px }
+
+/* Status messages */
+.s-ok  { font-size: 12px; color: var(--g); margin-top: 6px; font-weight: 600 }
+.s-err { font-size: 12px; color: var(--r); margin-top: 6px; font-weight: 600 }
+
+.join-row { display: flex; gap: 8px; align-items: center }
+.join-row input { flex: 1; letter-spacing: 3px; font-weight: 700; text-transform: uppercase; font-family: var(--mono) }
+
+.nsp { height: 72px }
 </style>
 </head>
 <body>
-<div class="app">
+<div class="wrap">
 
 <!-- ═══ AUTH ═══ -->
-<div id="s-auth" class="screen active">
+<div id="s-auth" class="screen on">
   <div class="auth-hero">
-    <span class="auth-logo">🧮</span>
+    <span class="auth-emoji">🧮</span>
     <div class="auth-title">MathRace</div>
     <div class="auth-sub">Do'stlar bilan haqiqiy global reyting!</div>
   </div>
   <div class="card">
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="authTab('login')">Kirish</button>
-      <button class="auth-tab" onclick="authTab('register')">Ro'yxatdan o'tish</button>
+    <div class="tabs-row">
+      <button class="tab-btn on" onclick="aTab('login')">Kirish</button>
+      <button class="tab-btn"   onclick="aTab('reg')">Ro'yxatdan o'tish</button>
     </div>
-    <div id="aerr" class="auth-err"></div>
-    <div id="aok" class="auth-ok"></div>
+    <div id="aerr" class="msg msg-err"></div>
+    <div id="aok"  class="msg msg-ok"></div>
     <div id="f-login">
-      <div class="auth-field"><label>Foydalanuvchi nomi</label><input id="l-user" placeholder="username" autocomplete="username"/></div>
-      <div class="auth-field"><label>Parol</label><input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
-      <button class="btn btn-a btn-f" onclick="doLogin()" style="margin-top:6px">Kirish →</button>
+      <div class="auth-field"><label>Foydalanuvchi nomi</label><input id="l-u" placeholder="username" autocomplete="username"/></div>
+      <div class="auth-field"><label>Parol</label><input id="l-p" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()" style="margin-top:6px">Kirish →</button>
     </div>
     <div id="f-reg" style="display:none">
-      <div class="auth-field"><label>Ism (ko'rinadigan)</label><input id="r-name" placeholder="Ism" maxlength="20"/></div>
-      <div class="auth-field"><label>Foydalanuvchi nomi</label><input id="r-user" placeholder="username" maxlength="16"/></div>
-      <div class="auth-field"><label>Parol</label><input id="r-pass" type="password" placeholder="Kamida 6 ta belgi"/></div>
-      <div class="auth-field"><label>Parolni tasdiqlang</label><input id="r-pass2" type="password" placeholder="••••••••"/></div>
-      <button class="btn btn-a btn-f" onclick="doRegister()" style="margin-top:6px">Ro'yxatdan o'tish →</button>
+      <div class="auth-field"><label>Ism</label><input id="r-n" placeholder="Ali Valiyev" maxlength="20"/></div>
+      <div class="auth-field"><label>Username</label><input id="r-u" placeholder="alidev" maxlength="16"/></div>
+      <div class="auth-field"><label>Parol</label><input id="r-p" type="password" placeholder="Kamida 6 ta belgi"/></div>
+      <div class="auth-field"><label>Parolni tasdiqlang</label><input id="r-p2" type="password" placeholder="••••••••"/></div>
+      <button class="btn btn-primary btn-full" onclick="doReg()" style="margin-top:6px">Ro'yxatdan o'tish →</button>
     </div>
   </div>
 </div>
@@ -238,124 +883,210 @@ select{cursor:pointer;width:auto;padding:7px 12px;font-size:13px}
 <!-- ═══ HOME ═══ -->
 <div id="s-home" class="screen">
   <div class="hdr">
-    <div class="hdr-user">
-      <div class="hdr-av" id="hdr-av"></div>
-      <div><div class="hdr-name" id="hdr-nm">—</div><div class="hdr-sub" id="hdr-sub">—</div></div>
+    <div class="hdr-left">
+      <div class="avi" id="h-av"></div>
+      <div>
+        <div class="hdr-name" id="h-nm">—</div>
+        <div class="hdr-sub"  id="h-sb">—</div>
+      </div>
     </div>
-    <div class="hdr-btns">
-      <button class="btn btn-g btn-s" onclick="goSettings()">⚙️</button>
-      <button class="btn btn-g btn-s" onclick="doLogout()">Chiqish</button>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-ghost btn-sm" onclick="goSet()">⚙️</button>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">Chiqish</button>
     </div>
   </div>
-  <div class="card">
+
+  <div class="card" style="animation:up .35s .05s var(--ease) both">
     <div class="lbl">Qiyinlik darajasi</div>
     <div class="diff-grid">
-      <div class="diff-card sel" onclick="selD(this,'easy')"><div class="d-icon">🟢</div><div class="d-name">Oson</div><div class="d-desc">+,− · 15s</div></div>
-      <div class="diff-card" onclick="selD(this,'medium')"><div class="d-icon">🟡</div><div class="d-name">O'rtacha</div><div class="d-desc">×,÷ · 12s</div></div>
-      <div class="diff-card" onclick="selD(this,'hard')"><div class="d-icon">🔴</div><div class="d-name">Qiyin</div><div class="d-desc">Aralash · 10s</div></div>
+      <div class="dc on" onclick="selD(this,'easy')"><span class="dc-icon">🟢</span><div class="dc-name">Oson</div><div class="dc-desc">+,− · 15s</div></div>
+      <div class="dc"    onclick="selD(this,'medium')"><span class="dc-icon">🟡</span><div class="dc-name">O'rtacha</div><div class="dc-desc">×,÷ · 12s</div></div>
+      <div class="dc"    onclick="selD(this,'hard')"><span class="dc-icon">🔴</span><div class="dc-name">Qiyin</div><div class="dc-desc">Aralash · 10s</div></div>
     </div>
-    <button class="btn btn-a btn-f" onclick="startGame()">O'yinni boshlash ↗</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button class="btn btn-primary btn-full" onclick="startSolo()">⚡ O'ynash</button>
+      <button class="btn btn-green   btn-full" onclick="goFriends()">👥 Do'stlar</button>
+    </div>
   </div>
-  <div class="card">
-    <div class="lbl">👥 Do'stlarni taklif qiling</div>
-    <div id="inv-sec"><button class="btn btn-f" onclick="genInvite()" style="margin-bottom:8px">Taklif kodi yaratish 🔗</button></div>
-    <div class="div"></div>
+
+  <div class="card" style="animation:up .35s .1s var(--ease) both">
+    <div class="lbl">Taklif kodi</div>
+    <div id="inv-sec">
+      <button class="btn btn-full" onclick="genInv()" style="margin-bottom:8px">Taklif kodi yaratish 🔗</button>
+    </div>
+    <div class="divider"></div>
     <div class="lbl">Kod bilan qo'shilish</div>
-    <div class="join-row"><input id="jinp" placeholder="KODNI KIRITING" maxlength="6"/><button class="btn btn-a" onclick="joinFriend()">Qo'shilish</button></div>
+    <div class="join-row">
+      <input id="jinp" placeholder="KODNI KIRITING" maxlength="6"/>
+      <button class="btn btn-primary" onclick="joinInv()">Qo'shilish</button>
+    </div>
     <div id="jst"></div>
   </div>
-  <div class="card">
-    <div class="lb-hdr">
-      <div class="lb-badge"><span class="live-dot"></span>&nbsp;Jonli global reyting</div>
-      <button class="btn btn-g btn-s" onclick="loadLb(ctab)">↻</button>
+
+  <div class="card" style="animation:up .35s .15s var(--ease) both">
+    <div class="lb-head">
+      <div class="live-pill"><span class="live-dot"></span>&nbsp;Jonli global reyting</div>
+      <button class="btn btn-ghost btn-sm" onclick="loadLB(ctab)">↻</button>
     </div>
     <div id="lb-count" class="lb-count"></div>
     <div class="lb-tabs">
-      <div class="lb-tab active" onclick="lbTab(this,'all')">Hammasi</div>
-      <div class="lb-tab" onclick="lbTab(this,'easy')">Oson</div>
-      <div class="lb-tab" onclick="lbTab(this,'medium')">O'rtacha</div>
-      <div class="lb-tab" onclick="lbTab(this,'hard')">Qiyin</div>
+      <div class="lb-tab on"  onclick="lbTab(this,'all')">Hammasi</div>
+      <div class="lb-tab"     onclick="lbTab(this,'easy')">Oson</div>
+      <div class="lb-tab"     onclick="lbTab(this,'medium')">O'rtacha</div>
+      <div class="lb-tab"     onclick="lbTab(this,'hard')">Qiyin</div>
     </div>
-    <div id="top3-home"></div>
-    <div id="lb-home"><div class="lb-loading">⏳ Yuklanmoqda...</div></div>
+    <div id="t3-home"></div>
+    <div id="lb-home"><div class="lb-load">⏳ Yuklanmoqda...</div></div>
   </div>
+  <div class="nsp"></div>
+</div>
+
+<!-- ═══ FRIENDS ═══ -->
+<div id="s-friends" class="screen">
+  <div class="f-hero">
+    <span class="f-emoji">👥</span>
+    <div class="f-title">Do'stlar bilan o'ynash</div>
+    <div class="f-sub">Xona yarating yoki kod bilan kiring</div>
+  </div>
+  <div class="card">
+    <div class="lbl">Qiyinlik (xona uchun)</div>
+    <div class="diff-grid" id="f-dg">
+      <div class="dc on" onclick="fSelD(this,'easy')"><span class="dc-icon">🟢</span><div class="dc-name">Oson</div><div class="dc-desc">+,− · 15s</div></div>
+      <div class="dc"    onclick="fSelD(this,'medium')"><span class="dc-icon">🟡</span><div class="dc-name">O'rtacha</div><div class="dc-desc">×,÷ · 12s</div></div>
+      <div class="dc"    onclick="fSelD(this,'hard')"><span class="dc-icon">🔴</span><div class="dc-name">Qiyin</div><div class="dc-desc">Aralash · 10s</div></div>
+    </div>
+  </div>
+  <div class="room-grid">
+    <div class="rcard create" onclick="createRoom()">
+      <span class="rcard-icon">🏠</span>
+      <div class="rcard-title">Xona yaratish</div>
+      <div class="rcard-sub">Kod bilan do'stlarni taklif qiling</div>
+    </div>
+    <div class="rcard joinn" onclick="showJoin()">
+      <span class="rcard-icon">🔑</span>
+      <div class="rcard-title">Qo'shilish</div>
+      <div class="rcard-sub">Kod bilan xonaga kiring</div>
+    </div>
+  </div>
+  <div id="join-box" style="display:none;animation:up .3s var(--ease) both">
+    <div class="card">
+      <div class="lbl" style="margin-bottom:8px">Xona kodini kiriting</div>
+      <input class="big" id="room-inp" placeholder="ABC123" maxlength="6" oninput="this.value=this.value.toUpperCase()" style="margin-bottom:10px"/>
+      <button class="btn btn-green btn-full" onclick="joinRoom()">Xonaga kirish →</button>
+      <div id="join-msg" style="margin-top:8px;font-size:13px"></div>
+    </div>
+  </div>
+  <button class="btn btn-ghost btn-full" onclick="goHome()" style="margin-top:4px">← Orqaga</button>
+  <div class="nsp"></div>
+</div>
+
+<!-- ═══ LOBBY ═══ -->
+<div id="s-lobby" class="screen">
+  <div class="lobby-code-card">
+    <div class="lbl">Xona kodi — do'stingizga yuboring</div>
+    <span class="room-code-display" id="lobby-code">——</span>
+    <div class="code-btns">
+      <button class="btn btn-primary btn-sm" onclick="copyCode()">Nusxalash 📋</button>
+      <button class="btn btn-ghost   btn-sm" onclick="shareCode()">Ulashish 📤</button>
+    </div>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-weight:700">O'yinchilar <span id="p-cnt" style="color:var(--a2);font-family:var(--mono)">1/4</span></div>
+      <div style="font-size:12px;color:var(--t1)">Kutilmoqda<span class="dots"><span></span><span></span><span></span></span></div>
+    </div>
+    <div id="lobby-list"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:4px">
+    <button class="btn btn-ghost   btn-full" onclick="leaveRoom()" style="flex:1">← Chiqish</button>
+    <button class="btn btn-primary btn-full" id="start-btn" onclick="hostStart()" style="flex:2;display:none">O'yinni boshlash ↗</button>
+  </div>
+  <div class="nsp"></div>
 </div>
 
 <!-- ═══ QUIZ ═══ -->
 <div id="s-quiz" class="screen">
-  <div class="qhdr">
-    <span class="qnum" id="qnum">1/10</span>
-    <div class="pw"><div class="pb" id="pb" style="width:10%"></div></div>
-    <span class="sbadge" id="lsc">0 ball</span>
+  <div class="q-head">
+    <span class="q-num" id="qnum">1/10</span>
+    <div class="prog-wrap"><div class="prog-bar" id="pbar" style="width:10%"></div></div>
+    <span class="q-badge" id="qbadge">0 ball</span>
   </div>
-  <div class="tw"><div class="tb" id="tb" style="width:100%;background:var(--accent)"></div></div>
-  <div class="qcard"><div class="qtext" id="qt">?</div><div class="qhint" id="qhi"></div></div>
-  <div class="fbmsg" id="fb"></div>
-  <div class="opts" id="opts"></div>
+  <div class="timer-wrap"><div class="timer-bar" id="tbar" style="width:100%;background:var(--a)"></div></div>
+  <div id="fbar" class="f-bar" style="display:none"></div>
+  <div class="q-card"><div class="q-text" id="qtext">?</div><div class="q-hint" id="qhint"></div></div>
+  <div class="fb-msg" id="fbmsg"></div>
+  <div class="opts-grid" id="opts"></div>
 </div>
 
 <!-- ═══ RESULT ═══ -->
 <div id="s-result" class="screen">
-  <div class="rc">
-    <span class="ri" id="ri">🏆</span>
-    <div class="rs" id="rsc">0</div>
-    <div class="rl">ball to'pladingiz!</div>
-    <div class="srow">
-      <div class="scard"><div class="sv" id="stc">0</div><div class="sl">To'g'ri</div></div>
-      <div class="scard"><div class="sv" id="stw">0</div><div class="sl">Noto'g'ri</div></div>
-      <div class="scard"><div class="sv" id="stt">0s</div><div class="sl">Vaqt</div></div>
-      <div class="scard"><div class="sv" id="str">#—</div><div class="sl">Reyting</div></div>
+  <div class="res-center">
+    <span class="res-icon"  id="r-icon">🏆</span>
+    <div class="res-score"  id="r-score">0</div>
+    <div class="res-label">ball to'pladingiz!</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-v" id="r-c">0</div><div class="stat-l">To'g'ri</div></div>
+      <div class="stat"><div class="stat-v" id="r-w">0</div><div class="stat-l">Noto'g'ri</div></div>
+      <div class="stat"><div class="stat-v" id="r-t">0s</div><div class="stat-l">Vaqt</div></div>
+      <div class="stat"><div class="stat-v" id="r-r">#—</div><div class="stat-l">Reyting</div></div>
+    </div>
+    <div id="fr-wrap" style="display:none">
+      <div class="card">
+        <div class="lbl" style="margin-bottom:10px">🏆 Do'stlar natijasi</div>
+        <div id="fr-list"></div>
+      </div>
     </div>
     <div class="card">
-      <div class="lb-badge" style="margin-bottom:10px"><span class="live-dot"></span>&nbsp;Global reyting — barcha o'yinchilar</div>
-      <div id="res-t3"></div>
-      <div id="res-lb"><div class="lb-loading"><span class="spin"></span>Yuklanmoqda...</div></div>
+      <div class="live-pill" style="margin-bottom:10px"><span class="live-dot"></span>&nbsp;Global reyting</div>
+      <div id="r-t3"></div>
+      <div id="r-lb"><div class="lb-load"><span class="spin"></span>Yuklanmoqda...</div></div>
     </div>
-    <div class="share-row">
-      <button class="btn btn-a" onclick="playAgain()">Qayta o'ynash</button>
-      <button class="btn btn-g" onclick="goHome()">Bosh sahifa</button>
-      <button class="btn btn-g" onclick="shareResult()">Ulashish 📤</button>
+    <div class="share-btns">
+      <button class="btn btn-primary" onclick="again()">Qayta o'ynash</button>
+      <button class="btn btn-ghost"   onclick="goHome()">Bosh sahifa</button>
+      <button class="btn btn-ghost"   onclick="share()">Ulashish 📤</button>
     </div>
   </div>
+  <div class="nsp"></div>
 </div>
 
 <!-- ═══ SETTINGS ═══ -->
-<div id="s-settings" class="screen">
+<div id="s-set" class="screen">
   <div class="set-title">⚙️ Sozlamalar</div>
-  <div class="user-profile">
-    <div class="up-av" id="up-av"></div>
-    <div class="up-name" id="up-nm">—</div>
-    <div class="up-sub" id="up-un">—</div>
-    <div class="up-stats">
-      <div class="ust"><div class="ust-v" id="up-g">0</div><div class="ust-l">O'yin</div></div>
-      <div class="ust"><div class="ust-v" id="up-b">0</div><div class="ust-l">Eng yuqori</div></div>
-      <div class="ust"><div class="ust-v" id="up-a">—</div><div class="ust-l">Aniqlik</div></div>
+  <div class="profile-card">
+    <div class="prof-avi" id="prof-av"></div>
+    <div class="prof-name" id="prof-nm">—</div>
+    <div class="prof-sub"  id="prof-un">—</div>
+    <div class="prof-stats">
+      <div class="ps"><div class="ps-v" id="ps-g">0</div><div class="ps-l">O'yin</div></div>
+      <div class="ps"><div class="ps-v" id="ps-b">0</div><div class="ps-l">Eng yuqori</div></div>
+      <div class="ps"><div class="ps-v" id="ps-a">—</div><div class="ps-l">Aniqlik</div></div>
     </div>
   </div>
   <div class="card">
     <div class="lbl">Ko'rinish</div>
     <div class="set-row">
-      <div><div class="set-nm">Mavzu</div><div class="set-ds">Qora yoki oq fon</div></div>
-      <select id="theme-sel" onchange="setTheme(this.value)">
+      <div><div class="set-name">Mavzu</div><div class="set-desc">Qora yoki oq fon</div></div>
+      <select id="th-sel" onchange="setTheme(this.value)">
         <option value="dark">🌙 Qora</option>
         <option value="light">☀️ Oq</option>
-        <option value="auto">🔄 Avtomatik</option>
+        <option value="auto">🔄 Avto</option>
       </select>
     </div>
     <div class="set-row">
-      <div><div class="set-nm">Animatsiyalar</div><div class="set-ds">Silliq o'tishlar</div></div>
-      <div class="toggle on" id="anim-tog" onclick="togAnim()"></div>
+      <div><div class="set-name">Animatsiyalar</div></div>
+      <div class="toggle on" id="anim-t" onclick="togAnim()"></div>
     </div>
     <div class="set-row">
-      <div><div class="set-nm">Ovoz effektlari</div><div class="set-ds">To'g'ri/noto'g'ri ovozi</div></div>
-      <div class="toggle" id="snd-tog" onclick="togSound()"></div>
+      <div><div class="set-name">Ovoz effektlari</div></div>
+      <div class="toggle" id="snd-t" onclick="togSnd()"></div>
     </div>
   </div>
   <div class="card">
     <div class="lbl">O'yin</div>
     <div class="set-row">
-      <div><div class="set-nm">Standart qiyinlik</div><div class="set-ds">O'yin boshida tanlangan</div></div>
-      <select id="defd-sel" onchange="setDefDiff(this.value)">
+      <div><div class="set-name">Standart qiyinlik</div></div>
+      <select id="dd-sel" onchange="setCfg('defDiff',this.value)">
         <option value="easy">🟢 Oson</option>
         <option value="medium">🟡 O'rtacha</option>
         <option value="hard">🔴 Qiyin</option>
@@ -365,462 +1096,641 @@ select{cursor:pointer;width:auto;padding:7px 12px;font-size:13px}
   <div class="card">
     <div class="lbl">Xavfli zona</div>
     <div class="set-row">
-      <div><div class="set-nm">Natijalarimni o'chirish</div><div class="set-ds">Reytingdan o'chiriladi</div></div>
-      <button class="btn btn-s btn-danger" onclick="clearMyScores()">O'chirish</button>
+      <div><div class="set-name">Natijalarimni o'chirish</div><div class="set-desc">Reytingdan o'chiriladi</div></div>
+      <button class="btn btn-sm btn-danger" onclick="clearScores()">O'chirish</button>
     </div>
     <div class="set-row">
-      <div><div class="set-nm">Profildan chiqish</div></div>
-      <button class="btn btn-s btn-danger" onclick="doLogout()">Chiqish</button>
+      <div><div class="set-name">Profildan chiqish</div></div>
+      <button class="btn btn-sm btn-danger" onclick="logout()">Chiqish</button>
     </div>
   </div>
-  <button class="btn btn-g btn-f" onclick="goHome()" style="margin-top:4px">← Orqaga</button>
+  <button class="btn btn-ghost btn-full" onclick="goHome()" style="margin-top:4px">← Orqaga</button>
+  <div class="nsp"></div>
 </div>
 
-</div><!-- .app -->
+</div><!-- .wrap -->
 
 <div class="nav" id="nav">
-  <button class="nav-btn active" id="nav-home" onclick="navTo('home')"><span class="nav-icon">🏠</span>Asosiy</button>
-  <button class="nav-btn" id="nav-play" onclick="navTo('play')"><span class="nav-icon">▶️</span>O'ynash</button>
-  <button class="nav-btn" id="nav-set" onclick="navTo('set')"><span class="nav-icon">⚙️</span>Sozlamalar</button>
+  <button class="nb on" id="nb-home"    onclick="navTo('home')"><span class="ni">🏠</span>Asosiy</button>
+  <button class="nb"    id="nb-friends" onclick="navTo('friends')"><span class="ni">👥</span>Do'stlar</button>
+  <button class="nb"    id="nb-set"     onclick="navTo('set')"><span class="ni">⚙️</span>Sozlamalar</button>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════
-// FIREBASE CONFIG
-// ══════════════════════════════════════════
-const FB = 'https://mathrace-3c964-default-rtdb.firebaseio.com';
+/* ═══════════════════════════════════════
+   FIREBASE
+═══════════════════════════════════════ */
+const FB = 'https://server-882c7-default-rtdb.firebaseio.com';
 
-async function fbGet(path) {
-  try {
-    const r = await fetch(`${FB}/${path}.json`);
-    if (!r.ok) return null;
-    return await r.json();
-  } catch { return null; }
+async function fbGet(p) {
+  try { const r = await fetch(`${FB}/${p}.json`); if (!r.ok) return null; return await r.json(); }
+  catch { return null; }
 }
-async function fbSet(path, data) {
-  try {
-    await fetch(`${FB}/${path}.json`, {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    });
-  } catch {}
+async function fbSet(p, d) {
+  try { await fetch(`${FB}/${p}.json`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d) }); }
+  catch {}
 }
-async function fbPatch(path, data) {
-  try {
-    await fetch(`${FB}/${path}.json`, {
-      method: 'PATCH',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    });
-  } catch {}
+async function fbPatch(p, d) {
+  try { await fetch(`${FB}/${p}.json`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d) }); }
+  catch {}
 }
-async function fbDelete(path) {
-  try { await fetch(`${FB}/${path}.json`, {method:'DELETE'}); } catch {}
+async function fbDel(p) {
+  try { await fetch(`${FB}/${p}.json`, { method:'DELETE' }); }
+  catch {}
 }
 
-// ══════════════════════════════════════════
-// CONSTANTS
-// ══════════════════════════════════════════
-const AVBG=['#7c6fff22','#22d98922','#ff5b5b22','#fbbf2422','#06b6d422','#f472b622'];
-const AVTXT=['#a99fff','#5afdb5','#ff8888','#fdd56a','#38d9f5','#f9a8d4'];
-const DL={easy:'Oson',medium:"O'rtacha",hard:'Qiyin'};
-const DC={easy:['rgba(34,217,137,0.12)','#22d989'],medium:['rgba(251,191,36,0.12)','#fbbf24'],hard:['rgba(255,91,91,0.12)','#ff5b5b']};
+/* ═══════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════ */
+const AV_BG  = ['#6c63ff22','#10e88822','#ff4d6d22','#ffc22e22','#06b6d422','#f472b622'];
+const AV_CLR = ['#a09cff','#44f0a0','#ff8899','#ffe066','#38d9f5','#f9a8d4'];
+const DL = { easy: 'Oson', medium: "O'rtacha", hard: 'Qiyin' };
+const DC = {
+  easy:   ['rgba(16,232,136,.1)',  '#10e888'],
+  medium: ['rgba(255,194,46,.1)',  '#ffc22e'],
+  hard:   ['rgba(255,77,109,.1)',  '#ff4d6d'],
+};
 
-let CU=null; // current user
-let diff='easy',qs=[],qi=0,score=0,cor=0,wrg=0;
-let startT=0,tInt=null,tLeft=15,answered=false,lastSc=0,ctab='all';
-let myCode=localStorage.getItem('mr_code')||'';
-let cfg={theme:'dark',anim:true,sound:false,defDiff:'easy'};
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
+let CU = null;
+let diff = 'easy', qs = [], qi = 0, score = 0, cor = 0, wrg = 0;
+let startT = 0, tInt = null, tLeft = 15, ans = false, lastSc = 0, ctab = 'all';
+let invCode = localStorage.getItem('mr_inv') || '';
+let cfg = { theme:'dark', anim:true, sound:false, defDiff:'easy' };
 
-// ══════════════════════════════════════════
-// SETTINGS
-// ══════════════════════════════════════════
-function loadCfg(){
-  try{const s=localStorage.getItem('mr_cfg');if(s)cfg=Object.assign(cfg,JSON.parse(s));}catch{}
+// Room state
+let roomCode = '', isHost = false, fDiff = 'easy';
+let pollTmr = null, pollFails = 0, isFriend = false;
+
+/* ═══════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════ */
+function loadCfg() {
+  try { const s = localStorage.getItem('mr_cfg'); if (s) cfg = Object.assign(cfg, JSON.parse(s)); } catch {}
   applyTheme(cfg.theme);
-  document.getElementById('theme-sel').value=cfg.theme;
-  document.getElementById('defd-sel').value=cfg.defDiff;
-  if(!cfg.anim)document.getElementById('anim-tog').classList.remove('on');
-  if(cfg.sound)document.getElementById('snd-tog').classList.add('on');
+  document.getElementById('th-sel').value = cfg.theme;
+  document.getElementById('dd-sel').value = cfg.defDiff;
+  if (!cfg.anim) document.getElementById('anim-t').classList.remove('on');
+  if (cfg.sound) document.getElementById('snd-t').classList.add('on');
 }
-function saveCfg(){localStorage.setItem('mr_cfg',JSON.stringify(cfg));}
-function applyTheme(t){
-  if(t==='auto')t=window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark';
-  document.documentElement.setAttribute('data-theme',t);
+function saveCfg() { localStorage.setItem('mr_cfg', JSON.stringify(cfg)); }
+function setCfg(k, v) { cfg[k] = v; saveCfg(); }
+function applyTheme(t) {
+  if (t === 'auto') t = window.matchMedia('(prefers-color-scheme:light)').matches ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
 }
-function setTheme(v){cfg.theme=v;applyTheme(v);saveCfg();}
-function togAnim(){cfg.anim=!cfg.anim;document.getElementById('anim-tog').classList.toggle('on',cfg.anim);document.documentElement.style.setProperty('--tr',cfg.anim?'0.22s cubic-bezier(0.4,0,0.2,1)':'0s');saveCfg();}
-function togSound(){cfg.sound=!cfg.sound;document.getElementById('snd-tog').classList.toggle('on',cfg.sound);saveCfg();}
-function setDefDiff(v){cfg.defDiff=v;saveCfg();}
-function playFx(t){
-  if(!cfg.sound)return;
-  try{const c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=t==='ok'?660:220;g.gain.setValueAtTime(0.15,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.3);o.start();o.stop(c.currentTime+0.3);}catch{}
-}
-
-// ══════════════════════════════════════════
-// AUTH — users in Firebase
-// ══════════════════════════════════════════
-function getCU(){try{return JSON.parse(localStorage.getItem('mr_cu'));}catch{return null;}}
-function saveCU(u){localStorage.setItem('mr_cu',JSON.stringify(u));}
-
-function authTab(tab){
-  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',i===(tab==='login'?0:1)));
-  document.getElementById('f-login').style.display=tab==='login'?'block':'none';
-  document.getElementById('f-reg').style.display=tab==='register'?'block':'none';
-  clrAuth();
-}
-function showAErr(m){const e=document.getElementById('aerr');e.textContent=m;e.style.display='block';document.getElementById('aok').style.display='none';}
-function showAOk(m){const e=document.getElementById('aok');e.textContent=m;e.style.display='block';document.getElementById('aerr').style.display='none';}
-function clrAuth(){document.getElementById('aerr').style.display='none';document.getElementById('aok').style.display='none';}
-
-async function doLogin(){
-  const u=document.getElementById('l-user').value.trim().toLowerCase();
-  const p=document.getElementById('l-pass').value;
-  if(!u||!p){showAErr('Barcha maydonlarni to\'ldiring!');return;}
-  showAErr(''); document.querySelector('#f-login .btn').textContent='⏳...';
-  const users=await fbGet('users');
-  document.querySelector('#f-login .btn').textContent='Kirish →';
-  if(!users||!users[u]){showAErr('Bunday foydalanuvchi topilmadi!');return;}
-  if(users[u].pw!==btoa(p)){showAErr('Parol noto\'g\'ri!');return;}
-  CU=users[u];saveCU(CU);afterLogin();
+function setTheme(v) { cfg.theme = v; applyTheme(v); saveCfg(); }
+function togAnim() { cfg.anim = !cfg.anim; document.getElementById('anim-t').classList.toggle('on', cfg.anim); saveCfg(); }
+function togSnd()  { cfg.sound = !cfg.sound; document.getElementById('snd-t').classList.toggle('on', cfg.sound); saveCfg(); }
+function beep(t) {
+  if (!cfg.sound) return;
+  try {
+    const c = new AudioContext(), o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.frequency.value = t === 'ok' ? 660 : 220;
+    g.gain.setValueAtTime(.15, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .3);
+    o.start(); o.stop(c.currentTime + .3);
+  } catch {}
 }
 
-async function doRegister(){
-  const name=document.getElementById('r-name').value.trim();
-  const u=document.getElementById('r-user').value.trim().toLowerCase();
-  const p=document.getElementById('r-pass').value;
-  const p2=document.getElementById('r-pass2').value;
-  if(!name||!u||!p||!p2){showAErr('Barcha maydonlarni to\'ldiring!');return;}
-  if(u.length<3){showAErr('Username kamida 3 ta belgi!');return;}
-  if(!/^[a-z0-9_]+$/.test(u)){showAErr('Username: faqat harf, raqam, _');return;}
-  if(p.length<6){showAErr('Parol kamida 6 ta belgi!');return;}
-  if(p!==p2){showAErr('Parollar mos kelmadi!');return;}
-  document.querySelector('#f-reg .btn').textContent='⏳...';
-  const users=await fbGet('users')||{};
-  if(users[u]){document.querySelector('#f-reg .btn').textContent='Ro\'yxatdan o\'tish →';showAErr('Bu username band!');return;}
-  const nu={username:u,name,pw:btoa(p),games:0,totalCor:0,totalWrg:0,bestScore:0,joined:Date.now()};
-  await fbSet(`users/${u}`,nu);
-  CU=nu;saveCU(CU);
-  showAOk('Muvaffaqiyatli ro\'yxatdan o\'tildi!');
-  setTimeout(afterLogin,600);
+/* ═══════════════════════════════════════
+   AUTH
+═══════════════════════════════════════ */
+function getCU() { try { return JSON.parse(localStorage.getItem('mr_cu')); } catch { return null; } }
+function saveCU(u) { localStorage.setItem('mr_cu', JSON.stringify(u)); }
+
+function aTab(t) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('on', i === (t === 'login' ? 0 : 1)));
+  document.getElementById('f-login').style.display = t === 'login' ? 'block' : 'none';
+  document.getElementById('f-reg').style.display   = t === 'reg'   ? 'block' : 'none';
+  clrA();
+}
+function showAE(m) { const e = document.getElementById('aerr'); e.textContent = m; e.style.display = 'block'; document.getElementById('aok').style.display = 'none'; }
+function showAO(m) { const e = document.getElementById('aok');  e.textContent = m; e.style.display = 'block'; document.getElementById('aerr').style.display = 'none'; }
+function clrA() { document.getElementById('aerr').style.display = 'none'; document.getElementById('aok').style.display = 'none'; }
+
+async function doLogin() {
+  const u = document.getElementById('l-u').value.trim().toLowerCase();
+  const p = document.getElementById('l-p').value;
+  if (!u || !p) { showAE('Barcha maydonlarni to\'ldiring!'); return; }
+  const btn = document.querySelector('#f-login .btn'); btn.textContent = '⏳...';
+  const users = await fbGet('users');
+  btn.textContent = 'Kirish →';
+  if (!users || !users[u]) { showAE('Foydalanuvchi topilmadi!'); return; }
+  if (users[u].pw !== btoa(p)) { showAE('Parol noto\'g\'ri!'); return; }
+  CU = users[u]; saveCU(CU); afterLogin();
 }
 
-function doLogout(){
-  localStorage.removeItem('mr_cu');CU=null;
-  showS('s-auth');document.getElementById('nav').classList.remove('show');
+async function doReg() {
+  const name = document.getElementById('r-n').value.trim();
+  const u    = document.getElementById('r-u').value.trim().toLowerCase();
+  const p    = document.getElementById('r-p').value;
+  const p2   = document.getElementById('r-p2').value;
+  if (!name || !u || !p || !p2) { showAE('Barcha maydonlarni to\'ldiring!'); return; }
+  if (u.length < 3)             { showAE('Username kamida 3 ta belgi!'); return; }
+  if (!/^[a-z0-9_]+$/.test(u)) { showAE('Username: faqat harf, raqam, _'); return; }
+  if (p.length < 6)             { showAE('Parol kamida 6 ta belgi!'); return; }
+  if (p !== p2)                 { showAE('Parollar mos kelmadi!'); return; }
+  const btn = document.querySelector('#f-reg .btn'); btn.textContent = '⏳...';
+  const users = await fbGet('users') || {};
+  if (users[u]) { btn.textContent = 'Ro\'yxatdan o\'tish →'; showAE('Bu username band!'); return; }
+  const nu = { username: u, name, pw: btoa(p), games: 0, totalCor: 0, totalWrg: 0, bestScore: 0, joined: Date.now() };
+  await fbSet(`users/${u}`, nu);
+  CU = nu; saveCU(CU);
+  showAO('Muvaffaqiyatli ro\'yxatdan o\'tildi!');
+  setTimeout(afterLogin, 600);
 }
 
-function afterLogin(){
-  diff=cfg.defDiff||'easy';
-  document.querySelectorAll('.diff-card').forEach(c=>{
-    const sel=c.getAttribute('onclick').includes(`'${diff}'`);
-    c.classList.toggle('sel',sel);
+function logout() {
+  if (roomCode) leaveRoom();
+  localStorage.removeItem('mr_cu'); CU = null;
+  showS('s-auth'); document.getElementById('nav').classList.remove('on');
+}
+
+function afterLogin() {
+  diff = cfg.defDiff || 'easy';
+  document.querySelectorAll('.diff-card .dc').forEach(c => c.classList.remove('on'));
+  document.querySelectorAll(`#s-home .dc`).forEach(c => {
+    if (c.getAttribute('onclick').includes(`'${diff}'`)) c.classList.add('on');
   });
-  updHdr();updProfile();
+  updHdr(); updProf();
   showS('s-home');
-  document.getElementById('nav').classList.add('show');
-  navActive('home');
-  loadLb('all');
-  if(myCode)renderInvBox();
+  document.getElementById('nav').classList.add('on');
+  navA('home');
+  loadLB('all');
+  if (invCode) renderInvBox();
 }
 
-// ══════════════════════════════════════════
-// USER HELPERS
-// ══════════════════════════════════════════
-function av(name){
-  const i=(name.charCodeAt(0)||0)%AVBG.length;
-  return{bg:AVBG[i],col:AVTXT[i],txt:name.slice(0,2).toUpperCase()};
+/* ═══════════════════════════════════════
+   USER HELPERS
+═══════════════════════════════════════ */
+function avStyle(name) {
+  const i = (name.charCodeAt(0) || 0) % AV_BG.length;
+  return { bg: AV_BG[i], col: AV_CLR[i], txt: name.slice(0, 2).toUpperCase() };
 }
-function setAv(elId,name){
-  const a=av(name);const el=document.getElementById(elId);
-  if(!el)return;el.style.background=a.bg;el.style.color=a.col;el.textContent=a.txt;
+function setAvi(id, name) {
+  const a = avStyle(name), el = document.getElementById(id);
+  if (!el) return;
+  el.style.background = a.bg; el.style.color = a.col; el.textContent = a.txt;
 }
-function updHdr(){
-  if(!CU)return;setAv('hdr-av',CU.name);
-  document.getElementById('hdr-nm').textContent=CU.name;
-  document.getElementById('hdr-sub').textContent=`${CU.games||0} o'yin · Eng yuqori: ${CU.bestScore||0}`;
+function updHdr() {
+  if (!CU) return;
+  setAvi('h-av', CU.name);
+  document.getElementById('h-nm').textContent = CU.name;
+  document.getElementById('h-sb').textContent = `${CU.games || 0} o'yin · Eng yuqori: ${CU.bestScore || 0}`;
 }
-function updProfile(){
-  if(!CU)return;setAv('up-av',CU.name);
-  document.getElementById('up-nm').textContent=CU.name;
-  document.getElementById('up-un').textContent='@'+CU.username;
-  document.getElementById('up-g').textContent=CU.games||0;
-  document.getElementById('up-b').textContent=CU.bestScore||0;
-  const tot=(CU.totalCor||0)+(CU.totalWrg||0);
-  document.getElementById('up-a').textContent=tot>0?Math.round((CU.totalCor||0)/tot*100)+'%':'—';
+function updProf() {
+  if (!CU) return;
+  setAvi('prof-av', CU.name);
+  document.getElementById('prof-nm').textContent = CU.name;
+  document.getElementById('prof-un').textContent = '@' + CU.username;
+  document.getElementById('ps-g').textContent = CU.games || 0;
+  document.getElementById('ps-b').textContent = CU.bestScore || 0;
+  const tot = (CU.totalCor || 0) + (CU.totalWrg || 0);
+  document.getElementById('ps-a').textContent = tot > 0 ? Math.round((CU.totalCor || 0) / tot * 100) + '%' : '—';
 }
-async function syncUser(){
-  const users=await fbGet('users')||{};
-  users[CU.username]=CU;
-  await fbSet(`users/${CU.username}`,CU);
-  saveCU(CU);
+async function syncUser() {
+  await fbSet(`users/${CU.username}`, CU); saveCU(CU);
 }
 
-// ══════════════════════════════════════════
-// SCORES — Firebase (GLOBAL, everyone sees)
-// ══════════════════════════════════════════
-async function saveScore(entry){
-  // path: scores/{username}_{diff}
-  const key=`${entry.username}_${entry.diff}`;
-  const ex=await fbGet(`scores/${key}`);
-  if(!ex||entry.score>ex.score){
-    await fbSet(`scores/${key}`,entry);
+/* ═══════════════════════════════════════
+   SCORES — AYNAN ISHLAYDIGAN KOD
+═══════════════════════════════════════ */
+async function saveScore(entry) {
+  const key = `${entry.username}_${entry.diff}`;
+  const ex = await fbGet(`scores/${key}`);
+  if (!ex || entry.score > ex.score) {
+    await fbSet(`scores/${key}`, entry);
   }
 }
-
-async function loadAllScores(){
-  const data=await fbGet('scores');
-  if(!data)return[];
+async function loadAllScores() {
+  const data = await fbGet('scores');
+  if (!data) return [];
   return Object.values(data);
 }
-
-async function clearMyScores(){
-  if(!CU)return;
-  if(!confirm('Barcha natijalaringiz o\'chiriladi. Davom etasizmi?'))return;
-  const diffs=['easy','medium','hard'];
-  for(const d of diffs) await fbDelete(`scores/${CU.username}_${d}`);
-  CU.bestScore=0;CU.games=0;CU.totalCor=0;CU.totalWrg=0;
-  await syncUser();updHdr();updProfile();loadLb(ctab);
+async function clearScores() {
+  if (!CU || !confirm('Barcha natijalaringiz o\'chiriladi?')) return;
+  for (const d of ['easy', 'medium', 'hard']) await fbDel(`scores/${CU.username}_${d}`);
+  CU.bestScore = 0; CU.games = 0; CU.totalCor = 0; CU.totalWrg = 0;
+  await syncUser(); updHdr(); updProf(); loadLB(ctab);
   toast('Natijalaringiz o\'chirildi ✓');
 }
 
-// ══════════════════════════════════════════
-// INVITE — Firebase
-// ══════════════════════════════════════════
-async function genInvite(){
-  if(!myCode)myCode=Math.random().toString(36).slice(2,8).toUpperCase();
-  localStorage.setItem('mr_code',myCode);
-  await fbSet(`invites/${myCode}`,{owner:CU.name,username:CU.username,t:Date.now()});
+/* ═══════════════════════════════════════
+   INVITE
+═══════════════════════════════════════ */
+async function genInv() {
+  if (!invCode) invCode = Math.random().toString(36).slice(2, 8).toUpperCase();
+  localStorage.setItem('mr_inv', invCode);
+  await fbSet(`invites/${invCode}`, { owner: CU.name, username: CU.username, t: Date.now() });
   renderInvBox();
 }
-function renderInvBox(){
-  document.getElementById('inv-sec').innerHTML=`
+function renderInvBox() {
+  document.getElementById('inv-sec').innerHTML = `
     <div class="inv-box">
       <div class="lbl">Sizning taklif kodingiz</div>
-      <div class="inv-code">${myCode}</div>
+      <div class="inv-code">${invCode}</div>
       <div class="inv-hint">Do'stingizga yuboring</div>
       <div class="inv-btns">
-        <button class="btn btn-a btn-s" onclick="cpCode()">Nusxalash 📋</button>
-        <button class="btn btn-g btn-s" onclick="shInv()">Ulashish 📤</button>
+        <button class="btn btn-primary btn-sm" onclick="cpInv()">Nusxalash 📋</button>
+        <button class="btn btn-ghost   btn-sm" onclick="shInv()">Ulashish 📤</button>
       </div>
     </div>`;
 }
-function cpCode(){navigator.clipboard.writeText(myCode).then(()=>toast('Kod nusxalandi! ✓'));}
-function shInv(){
-  const txt=`${CU.name} sizni MathRace ga taklif qilmoqda! 🧮\nKod: ${myCode}`;
-  if(navigator.share)navigator.share({title:'MathRace',text:txt}).catch(()=>{});
-  else navigator.clipboard.writeText(txt).then(()=>toast('Nusxalandi!'));
+function cpInv() { navigator.clipboard.writeText(invCode).then(() => toast('Kod nusxalandi! ✓')); }
+function shInv() {
+  const txt = `${CU.name} sizni MathRace ga taklif qilmoqda! 🧮\nKod: ${invCode}`;
+  if (navigator.share) navigator.share({ title: 'MathRace', text: txt }).catch(() => {});
+  else navigator.clipboard.writeText(txt).then(() => toast('Nusxalandi!'));
 }
-async function joinFriend(){
-  const code=document.getElementById('jinp').value.trim().toUpperCase();
-  const st=document.getElementById('jst');
-  if(code.length<4){st.className='j-err';st.textContent='❌ Kamida 4 ta belgi';return;}
-  st.innerHTML='<span class="spin"></span>Tekshirilmoqda...';st.className='';
-  const inv=await fbGet(`invites/${code}`);
-  if(inv){
-    st.className='j-ok';st.textContent=`✅ ${inv.owner} bilan do'stlashingiz bog'landi!`;
-    document.getElementById('jinp').value='';
-    toast(`${inv.owner} bilan bellashish mumkin! 🎉`);loadLb(ctab);
+async function joinInv() {
+  const code = document.getElementById('jinp').value.trim().toUpperCase();
+  const st = document.getElementById('jst');
+  if (code.length < 4) { st.className = 's-err'; st.textContent = '❌ Kamida 4 ta belgi'; return; }
+  st.innerHTML = '<span class="spin"></span>Tekshirilmoqda...'; st.className = '';
+  const inv = await fbGet(`invites/${code}`);
+  if (inv) {
+    st.className = 's-ok'; st.textContent = `✅ ${inv.owner} bilan do'stlashingiz bog'landi!`;
+    document.getElementById('jinp').value = '';
+    toast(`${inv.owner} bilan bellashish mumkin! 🎉`); loadLB(ctab);
   } else {
-    st.className='j-err';st.textContent='❌ Bu kod topilmadi';
+    st.className = 's-err'; st.textContent = '❌ Bu kod topilmadi';
   }
 }
 
-// ══════════════════════════════════════════
-// LEADERBOARD
-// ══════════════════════════════════════════
-function top3html(list){
-  const md=[{c:'gold',i:'🥇'},{c:'silver',i:'🥈'},{c:'bronze',i:'🥉'}];
-  if(!list.length)return'';
-  return`<div class="top3">${list.slice(0,Math.min(3,list.length)).map((s,i)=>`
-    <div class="t3c ${md[i].c}">
+/* ═══════════════════════════════════════
+   LEADERBOARD
+═══════════════════════════════════════ */
+function top3(list) {
+  const md = [{ c: 'gold', i: '🥇' }, { c: 'silver', i: '🥈' }, { c: 'bronze', i: '🥉' }];
+  if (!list.length) return '';
+  return `<div class="top3">${list.slice(0, Math.min(3, list.length)).map((s, i) => `
+    <div class="t3 ${md[i].c}">
       <div class="t3-med">${md[i].i}</div>
       <div class="t3-nm">${s.name}</div>
       <div class="t3-sc">${s.score}</div>
-      <div class="t3-sub">${DL[s.diff]||s.diff} · ${s.time}s</div>
+      <div class="t3-sub">${DL[s.diff] || s.diff} · ${s.time}s</div>
     </div>`).join('')}</div>`;
 }
-function lbRowHtml(s,i){
-  const a=av(s.name);
-  const isMe=CU&&s.username===CU.username;
-  const dc=DC[s.diff]||DC.easy;
-  const ri=i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
-  return`<div class="lb-row${isMe?' me':''}" style="animation-delay:${i*0.04}s">
+function lbRow(s, i) {
+  const a = avStyle(s.name);
+  const isMe = CU && s.username === CU.username;
+  const dc = DC[s.diff] || DC.easy;
+  const ri = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
+  return `<div class="lb-row${isMe ? ' me' : ''}" style="animation-delay:${i * .04}s">
     <span class="lb-rk">${ri}</span>
     <div class="lb-av" style="background:${a.bg};color:${a.col}">${a.txt}</div>
-    <span class="lb-nm">${s.name}${isMe?' 👈':''}</span>
-    <span class="lb-df" style="background:${dc[0]};color:${dc[1]}">${DL[s.diff]||s.diff}</span>
+    <span class="lb-nm">${s.name}${isMe ? ' 👈' : ''}</span>
+    <span class="lb-df" style="background:${dc[0]};color:${dc[1]}">${DL[s.diff] || s.diff}</span>
     <span class="lb-tm">${s.time}s</span>
     <span class="lb-sc">${s.score}</span>
   </div>`;
 }
-async function loadLb(filter){
-  ctab=filter;
-  document.getElementById('lb-home').innerHTML='<div class="lb-loading"><span class="spin"></span>Firebase dan yuklanmoqda...</div>';
-  document.getElementById('top3-home').innerHTML='';
-  const all=await loadAllScores();
-  let filt=filter==='all'?[...all]:all.filter(s=>s.diff===filter);
-  filt.sort((a,b)=>b.score-a.score);
-  const uniq=[...new Set(all.map(s=>s.username))].length;
-  document.getElementById('lb-count').textContent=uniq>0?`🌍 ${uniq} nafar o'yinchi dunyo bo'yicha`:'';
-  if(!filt.length){
-    document.getElementById('lb-home').innerHTML='<div class="lb-empty">Hali hech kim o\'ynamagan! 🚀<br>Birinchi bo\'ling!</div>';
+async function loadLB(filter) {
+  ctab = filter;
+  document.getElementById('lb-home').innerHTML = '<div class="lb-load"><span class="spin"></span>Firebase dan yuklanmoqda...</div>';
+  document.getElementById('t3-home').innerHTML = '';
+  const all = await loadAllScores();
+  let filt = filter === 'all' ? [...all] : all.filter(s => s.diff === filter);
+  filt.sort((a, b) => b.score - a.score);
+  const uniq = [...new Set(all.map(s => s.username))].length;
+  document.getElementById('lb-count').textContent = uniq > 0 ? `🌍 ${uniq} nafar o'yinchi dunyo bo'yicha` : '';
+  if (!filt.length) {
+    document.getElementById('lb-home').innerHTML = '<div class="lb-empty">Hali hech kim o\'ynamagan! 🚀<br>Birinchi bo\'ling!</div>';
     return;
   }
-  document.getElementById('top3-home').innerHTML=top3html(filt);
-  const rest=filt.slice(3,15);
-  document.getElementById('lb-home').innerHTML=rest.map((s,i)=>lbRowHtml(s,i+3)).join('');
+  document.getElementById('t3-home').innerHTML = top3(filt);
+  document.getElementById('lb-home').innerHTML = filt.slice(3, 15).map((s, i) => lbRow(s, i + 3)).join('');
 }
-function lbTab(el,f){
-  document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');loadLb(f);
-}
-
-// ══════════════════════════════════════════
-// DIFF SELECT
-// ══════════════════════════════════════════
-function selD(el,d){
-  document.querySelectorAll('.diff-card').forEach(c=>c.classList.remove('sel'));
-  el.classList.add('sel');diff=d;
+function lbTab(el, f) {
+  document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on'); loadLB(f);
 }
 
-// ══════════════════════════════════════════
-// GAME
-// ══════════════════════════════════════════
-function rn(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
-function makeQ(text,a){
-  a=Math.round(a*100)/100;const o=new Set([a]);let t=0;
-  while(o.size<4&&t<80){t++;const d=rn(1,Math.max(3,Math.abs(Math.round(a*0.3))||5));o.add(a+(Math.random()>.5?d:-d));}
-  return{text,ans:a,opts:[...o].sort(()=>Math.random()-.5)};
+/* ═══════════════════════════════════════
+   FRIENDS ROOM
+═══════════════════════════════════════ */
+function fSelD(el, d) {
+  document.querySelectorAll('#f-dg .dc').forEach(c => c.classList.remove('on'));
+  el.classList.add('on'); fDiff = d;
 }
-function gE(){const op=rn(0,1)?'+':'-';let a=rn(1,20),b=rn(1,20);if(op==='-'&&b>a)[a,b]=[b,a];return makeQ(`${a} ${op} ${b} = ?`,op==='+'?a+b:a-b);}
-function gM(){const t=rn(0,3);if(t===0){const a=rn(2,12),b=rn(2,12);return makeQ(`${a} × ${b} = ?`,a*b);}if(t===1){const b=rn(2,12),a=b*rn(2,10);return makeQ(`${a} ÷ ${b} = ?`,a/b);}if(t===2){const a=rn(10,50),b=rn(10,50);return makeQ(`${a} + ${b} = ?`,a+b);}let a=rn(20,80),b=rn(10,40);if(b>a)[a,b]=[b,a];return makeQ(`${a} − ${b} = ?`,a-b);}
-function gH(){const t=rn(0,4);if(t===0){const a=rn(2,15),b=rn(2,15),c=rn(1,10);return makeQ(`${a}×${b}+${c}=?`,a*b+c);}if(t===1){const n=rn(2,12);return makeQ(`${n}² = ?`,n*n);}if(t===2){const sq=[4,9,16,25,36,49,64,81,100,121,144];const n=sq[rn(0,sq.length-1)];return makeQ(`√${n} = ?`,Math.sqrt(n));}if(t===3){const a=rn(2,9),b=rn(2,9);return makeQ(`${a}% dan ${b*10} = ?`,Math.round(a*b*10/100));}const a=rn(2,20),b=rn(2,20),c=rn(2,10);const v=a*b-c;if(v<1)return gH();return makeQ(`${a}×${b}−${c}=?`,v);}
-function genQs(d){const f=d==='easy'?gE:d==='medium'?gM:gH;return Array.from({length:10},f);}
+function genRoomCode() { return Math.random().toString(36).slice(2, 8).toUpperCase(); }
 
-function startGame(){
-  if(!CU)return;
-  qs=genQs(diff);qi=0;score=0;cor=0;wrg=0;startT=Date.now();
-  showS('s-quiz');loadQ();navActive('play');
+async function createRoom() {
+  if (!CU) return;
+  const el = document.querySelector('.rcard.create'); if (el) el.style.opacity = '.6';
+  roomCode = genRoomCode(); isHost = true;
+  await fbSet(`rooms/${roomCode}`, {
+    code: roomCode, host: CU.username, hostName: CU.name,
+    diff: fDiff, status: 'waiting',
+    players: { [CU.username]: { name: CU.name, score: 0, done: false } },
+    created: Date.now()
+  });
+  if (el) el.style.opacity = '1';
+  openLobby();
 }
-function loadQ(){
-  if(qi>=qs.length){endGame();return;}
-  answered=false;
-  const q=qs[qi];
-  document.getElementById('qnum').textContent=`${qi+1}/10`;
-  document.getElementById('pb').style.width=`${(qi+1)*10}%`;
-  document.getElementById('lsc').textContent=`${score} ball`;
-  document.getElementById('qt').textContent=q.text;
-  const tl=diff==='easy'?15:diff==='medium'?12:10;
-  document.getElementById('qhi').textContent=`⏱ ${tl} soniya`;
-  document.getElementById('fb').textContent='';document.getElementById('fb').className='fbmsg';
-  document.getElementById('opts').innerHTML=q.opts.map(o=>`<button class="obtn" onclick="answer(this,${o},${q.ans})">${o}</button>`).join('');
+
+function showJoin() {
+  const b = document.getElementById('join-box');
+  b.style.display = b.style.display === 'none' ? 'block' : 'none';
+}
+
+async function joinRoom() {
+  const code = document.getElementById('room-inp').value.trim().toUpperCase();
+  const msg  = document.getElementById('join-msg');
+  if (code.length < 4) { msg.style.color = 'var(--r)'; msg.textContent = '❌ Kamida 4 ta belgi'; return; }
+  msg.style.color = 'var(--t1)'; msg.innerHTML = '<span class="spin"></span>Xona qidirilmoqda...';
+  const room = await fbGet(`rooms/${code}`);
+  if (!room) { msg.style.color = 'var(--r)'; msg.textContent = '❌ Xona topilmadi'; return; }
+  if (room.status !== 'waiting') { msg.style.color = 'var(--r)'; msg.textContent = '❌ Xona boshlangan yoki yopilgan'; return; }
+  if (Object.keys(room.players || {}).length >= 4) { msg.style.color = 'var(--r)'; msg.textContent = '❌ Xona to\'la (max 4)'; return; }
+  roomCode = code; isHost = false; fDiff = room.diff || 'easy';
+  await fbPatch(`rooms/${code}/players/${CU.username}`, { name: CU.name, score: 0, done: false });
+  document.getElementById('room-inp').value = ''; msg.textContent = '';
+  openLobby();
+}
+
+function openLobby() {
+  document.getElementById('lobby-code').textContent = roomCode;
+  document.getElementById('start-btn').style.display = isHost ? 'flex' : 'none';
+  renderLobbyPlayers({ [CU.username]: { name: CU.name, score: 0 } }, CU.username);
+  showS('s-lobby'); navA('friends');
+  startPoll();
+}
+
+function startPoll() {
+  clearInterval(pollTmr); pollFails = 0;
+  setTimeout(() => { doPoll(); pollTmr = setInterval(doPoll, 2500); }, isHost ? 1500 : 800);
+}
+
+async function doPoll() {
+  if (!roomCode) return;
+  const room = await fbGet(`rooms/${roomCode}`);
+  if (!room) {
+    if (isHost) return;
+    if (++pollFails >= 5) { clearInterval(pollTmr); toast('Xona topilmadi'); roomCode = ''; isHost = false; goFriends(); }
+    return;
+  }
+  pollFails = 0;
+  if (room.status === 'started' && !isHost) {
+    clearInterval(pollTmr); fDiff = room.diff || 'easy'; diff = fDiff;
+    isFriend = true; startQuiz(); return;
+  }
+  if (room.status === 'closed') {
+    clearInterval(pollTmr);
+    if (!isHost) { toast('Host xonani yopdi'); roomCode = ''; isHost = false; goFriends(); }
+    return;
+  }
+  renderLobbyPlayers(room.players || {}, room.host);
+  if (isFriend && document.getElementById('s-quiz').classList.contains('on')) {
+    renderFBar(room.players || {});
+  }
+}
+
+function renderLobbyPlayers(players, host) {
+  const cnt = Object.keys(players).length;
+  document.getElementById('p-cnt').textContent = `${cnt}/4`;
+  document.getElementById('lobby-list').innerHTML = Object.entries(players).map(([u, p], i) => {
+    const a = avStyle(p.name); const isMe = u === CU.username; const isH = u === host;
+    return `<div class="player-card" style="animation-delay:${i * .07}s">
+      <div class="p-avi" style="background:${a.bg};color:${a.col}">${a.txt}</div>
+      <span class="p-name">${p.name}${isMe ? ' (siz)' : ''}</span>
+      ${isH ? '<span class="p-tag tag-host">Host</span>' : '<span class="p-tag tag-ready">Tayyor ✓</span>'}
+    </div>`;
+  }).join('');
+}
+
+function copyCode() { navigator.clipboard.writeText(roomCode).then(() => toast('Kod nusxalandi! ✓')); }
+function shareCode() {
+  const txt = `${CU.name} sizni MathRace ga taklif qilmoqda! 🧮\nXona kodi: ${roomCode}`;
+  if (navigator.share) navigator.share({ title: 'MathRace', text: txt }).catch(() => {});
+  else navigator.clipboard.writeText(txt).then(() => toast('Nusxalandi!'));
+}
+
+async function leaveRoom() {
+  clearInterval(pollTmr);
+  if (roomCode) {
+    await fbDel(`rooms/${roomCode}/players/${CU.username}`);
+    if (isHost) { await fbPatch(`rooms/${roomCode}`, { status: 'closed' }); setTimeout(() => fbDel(`rooms/${roomCode}`), 5000); }
+  }
+  roomCode = ''; isHost = false; isFriend = false; goFriends();
+}
+
+async function hostStart() {
+  if (!isHost || !roomCode) return;
+  clearInterval(pollTmr);
+  isFriend = true; diff = fDiff;
+  await fbPatch(`rooms/${roomCode}`, { status: 'started', diff: fDiff, startedAt: Date.now() });
+  startQuiz();
+}
+
+function renderFBar(players) {
+  document.getElementById('fbar').innerHTML = Object.entries(players).map(([u, p]) => {
+    const a = avStyle(p.name); const isMe = u === CU.username;
+    return `<div class="f-bar-item">
+      <div class="f-bar-av" style="background:${a.bg};color:${a.col}">${a.txt}</div>
+      <span>${p.name.split(' ')[0]}</span>
+      <span class="f-bar-sc">${p.score || 0}</span>
+    </div>`;
+  }).join('');
+}
+async function syncFriend(done = false) {
+  if (!roomCode) return;
+  await fbPatch(`rooms/${roomCode}/players/${CU.username}`, { score, done });
+}
+
+/* ═══════════════════════════════════════
+   GAME
+═══════════════════════════════════════ */
+function selD(el, d)  { document.querySelectorAll('#s-home .dc').forEach(c => c.classList.remove('on')); el.classList.add('on'); diff = d; }
+function rn(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+
+function mkQ(text, a) {
+  a = Math.round(a * 100) / 100;
+  const o = new Set([a]); let t = 0;
+  while (o.size < 4 && t < 80) { t++; const d = rn(1, Math.max(3, Math.abs(Math.round(a * .3)) || 5)); o.add(a + (Math.random() > .5 ? d : -d)); }
+  return { text, ans: a, opts: [...o].sort(() => Math.random() - .5) };
+}
+function gE() { const op = rn(0,1)?'+':'-'; let a=rn(1,20),b=rn(1,20); if(op==='-'&&b>a)[a,b]=[b,a]; return mkQ(`${a} ${op} ${b} = ?`, op==='+'?a+b:a-b); }
+function gM() { const t=rn(0,3); if(t===0){const a=rn(2,12),b=rn(2,12);return mkQ(`${a} × ${b} = ?`,a*b);} if(t===1){const b=rn(2,12),a=b*rn(2,10);return mkQ(`${a} ÷ ${b} = ?`,a/b);} if(t===2){const a=rn(10,50),b=rn(10,50);return mkQ(`${a} + ${b} = ?`,a+b);} let a=rn(20,80),b=rn(10,40);if(b>a)[a,b]=[b,a];return mkQ(`${a} − ${b} = ?`,a-b); }
+function gH() { const t=rn(0,4); if(t===0){const a=rn(2,15),b=rn(2,15),c=rn(1,10);return mkQ(`${a}×${b}+${c}=?`,a*b+c);} if(t===1){const n=rn(2,12);return mkQ(`${n}² = ?`,n*n);} if(t===2){const sq=[4,9,16,25,36,49,64,81,100,121,144];const n=sq[rn(0,sq.length-1)];return mkQ(`√${n} = ?`,Math.sqrt(n));} if(t===3){const a=rn(2,9),b=rn(2,9);return mkQ(`${a}% dan ${b*10} = ?`,Math.round(a*b*10/100));} const a=rn(2,20),b=rn(2,20),c=rn(2,10);const v=a*b-c;if(v<1)return gH();return mkQ(`${a}×${b}−${c}=?`,v); }
+function genQs(d) { const f=d==='easy'?gE:d==='medium'?gM:gH; return Array.from({length:10},f); }
+
+function startSolo() {
+  isFriend = false;
+  document.getElementById('fbar').style.display = 'none';
+  qs=genQs(diff); qi=0; score=0; cor=0; wrg=0; startT=Date.now();
+  showS('s-quiz'); loadQ(); navA('home');
+}
+
+function startQuiz() {
+  qs=genQs(diff); qi=0; score=0; cor=0; wrg=0; startT=Date.now();
+  document.getElementById('fbar').style.display = isFriend ? 'flex' : 'none';
+  showS('s-quiz'); loadQ(); navA('home');
+  if (isFriend) syncFriend();
+}
+
+function loadQ() {
+  if (qi >= qs.length) { endGame(); return; }
+  ans = false;
+  const q = qs[qi];
+  document.getElementById('qnum').textContent   = `${qi+1}/10`;
+  document.getElementById('pbar').style.width   = `${(qi+1)*10}%`;
+  document.getElementById('qbadge').textContent = `${score} ball`;
+  document.getElementById('qtext').textContent  = q.text;
+  const tl = diff==='easy'?15:diff==='medium'?12:10;
+  document.getElementById('qhint').textContent = `⏱ ${tl} soniya`;
+  document.getElementById('fbmsg').textContent = ''; document.getElementById('fbmsg').className = 'fb-msg';
+  document.getElementById('opts').innerHTML = q.opts.map(o =>
+    `<button class="opt" onclick="answer(this,${o},${q.ans})">${o}</button>`).join('');
   startTimer(tl);
 }
-function startTimer(s){
-  clearInterval(tInt);tLeft=s;
-  const b=document.getElementById('tb');
-  b.style.transition='none';b.style.width='100%';b.style.background='var(--accent)';
-  requestAnimationFrame(()=>{b.style.transition=`width ${s}s linear,background ${s}s linear`;b.style.width='0%';b.style.background='var(--red)';});
-  tInt=setInterval(()=>{tLeft--;if(tLeft<=0){clearInterval(tInt);if(!answered)timeOut();}},1000);
+
+function startTimer(s) {
+  clearInterval(tInt); tLeft = s;
+  const b = document.getElementById('tbar');
+  b.style.transition = 'none'; b.style.width = '100%'; b.style.background = 'var(--a)';
+  requestAnimationFrame(() => {
+    b.style.transition = `width ${s}s linear, background ${s}s linear`;
+    b.style.width = '0%'; b.style.background = 'var(--r)';
+  });
+  tInt = setInterval(() => { tLeft--; if (tLeft <= 0) { clearInterval(tInt); if (!ans) tOut(); } }, 1000);
 }
-function timeOut(){
-  answered=true;wrg++;
-  document.getElementById('fb').textContent=`⏰ Vaqt! To'g'ri: ${qs[qi].ans}`;
-  document.getElementById('fb').className='fbmsg no';
-  document.querySelectorAll('.obtn').forEach(b=>b.disabled=true);
-  playFx('no');setTimeout(()=>{qi++;loadQ();},1300);
+
+function tOut() {
+  ans = true; wrg++;
+  document.getElementById('fbmsg').textContent = `⏰ Vaqt! To'g'ri: ${qs[qi].ans}`;
+  document.getElementById('fbmsg').className = 'fb-msg no';
+  document.querySelectorAll('.opt').forEach(b => b.disabled = true);
+  beep('no'); setTimeout(() => { qi++; loadQ(); }, 1300);
 }
-function answer(btn,chosen,a){
-  if(answered)return;answered=true;clearInterval(tInt);
-  const ok=Math.abs(chosen-a)<0.001;
-  const fb=document.getElementById('fb');
-  document.querySelectorAll('.obtn').forEach(b=>{b.disabled=true;if(Math.abs(parseFloat(b.textContent)-a)<0.001)b.classList.add('correct');});
-  if(ok){
-    btn.classList.add('correct');
-    const bo=diff==='easy'?50:diff==='medium'?100:150;
-    const sp=Math.max(0,tLeft)*(diff==='easy'?3:diff==='medium'?5:8);
-    const g=bo+sp;score+=g;cor++;
-    fb.textContent=`✓ To'g'ri! +${g} ball`;fb.className='fbmsg ok';playFx('ok');
+
+function answer(btn, chosen, a) {
+  if (ans) return; ans = true; clearInterval(tInt);
+  const ok = Math.abs(chosen - a) < .001;
+  const fb = document.getElementById('fbmsg');
+  document.querySelectorAll('.opt').forEach(b => {
+    b.disabled = true;
+    if (Math.abs(parseFloat(b.textContent) - a) < .001) b.classList.add('ok');
+  });
+  if (ok) {
+    btn.classList.add('ok');
+    const bo = diff==='easy'?50:diff==='medium'?100:150;
+    const sp = Math.max(0, tLeft) * (diff==='easy'?3:diff==='medium'?5:8);
+    const g = bo + sp; score += g; cor++;
+    fb.textContent = `✓ To'g'ri! +${g} ball`; fb.className = 'fb-msg ok'; beep('ok');
   } else {
-    btn.classList.add('wrong');wrg++;
-    fb.textContent=`✗ Noto'g'ri. To'g'ri: ${a}`;fb.className='fbmsg no';playFx('no');
+    btn.classList.add('no'); wrg++;
+    fb.textContent = `✗ Noto'g'ri. To'g'ri: ${a}`; fb.className = 'fb-msg no'; beep('no');
   }
-  document.getElementById('lsc').textContent=`${score} ball`;
-  setTimeout(()=>{qi++;loadQ();},1300);
+  document.getElementById('qbadge').textContent = `${score} ball`;
+  if (isFriend) syncFriend(false);
+  setTimeout(() => { qi++; loadQ(); }, 1300);
 }
 
-async function endGame(){
-  const el=Math.round((Date.now()-startT)/1000);
-  lastSc=score;
-  const entry={username:CU.username,name:CU.name,diff,score,cor,wrg,time:el,date:Date.now()};
-  document.getElementById('ri').textContent='⏳';
-  document.getElementById('rsc').textContent=score;
-  document.getElementById('stc').textContent=cor;
-  document.getElementById('stw').textContent=wrg;
-  document.getElementById('stt').textContent=`${el}s`;
-  document.getElementById('str').textContent='...';
-  document.getElementById('res-lb').innerHTML='<div class="lb-loading"><span class="spin"></span>Firebase ga saqlanmoqda...</div>';
-  document.getElementById('res-t3').innerHTML='';
-  showS('s-result');navActive('home');
+async function endGame() {
+  const el = Math.round((Date.now() - startT) / 1000);
+  lastSc = score;
+  const entry = { username: CU.username, name: CU.name, diff, score, cor, wrg, time: el, date: Date.now() };
 
-  // Save to Firebase
+  document.getElementById('r-icon').textContent = '⏳';
+  document.getElementById('r-score').textContent = score;
+  document.getElementById('r-c').textContent = cor;
+  document.getElementById('r-w').textContent = wrg;
+  document.getElementById('r-t').textContent = `${el}s`;
+  document.getElementById('r-r').textContent = '...';
+  document.getElementById('r-lb').innerHTML = '<div class="lb-load"><span class="spin"></span>Firebase ga saqlanmoqda...</div>';
+  document.getElementById('r-t3').innerHTML = '';
+  document.getElementById('fr-wrap').style.display = 'none';
+  showS('s-result'); navA('home');
+
+  // Friends sync
+  if (isFriend) await syncFriend(true);
+
+  // Save global score — AYNAN ISHLAYDIGAN KOD
   await saveScore(entry);
-  // Update user stats
-  CU.games=(CU.games||0)+1;
-  CU.totalCor=(CU.totalCor||0)+cor;
-  CU.totalWrg=(CU.totalWrg||0)+wrg;
-  if(score>CU.bestScore)CU.bestScore=score;
-  await syncUser();updHdr();updProfile();
 
-  // Load fresh leaderboard
-  const all=await loadAllScores();
-  let filt=all.filter(s=>s.diff===diff).sort((a,b)=>b.score-a.score);
-  const rank=filt.findIndex(s=>s.username===CU.username)+1||'?';
-  document.getElementById('str').textContent=`#${rank}`;
-  const ic=['🏆','🥇','🥈'];
-  document.getElementById('ri').textContent=typeof rank==='number'&&rank<=3?ic[rank-1]:score>=500?'🎯':'⭐';
-  document.getElementById('res-t3').innerHTML=filt.length?top3html(filt):'';
-  document.getElementById('res-lb').innerHTML=filt.slice(3,10).map((s,i)=>lbRowHtml(s,i+3)).join('');
+  // User stats
+  CU.games     = (CU.games     || 0) + 1;
+  CU.totalCor  = (CU.totalCor  || 0) + cor;
+  CU.totalWrg  = (CU.totalWrg  || 0) + wrg;
+  if (score > CU.bestScore) CU.bestScore = score;
+  await syncUser(); updHdr(); updProf();
+
+  // Friends result
+  if (isFriend && roomCode) {
+    const room = await fbGet(`rooms/${roomCode}`);
+    if (room && room.players) {
+      const sorted = Object.entries(room.players).map(([u, p]) => ({ ...p, username: u })).sort((a, b) => b.score - a.score);
+      const medals = ['🥇', '🥈', '🥉'];
+      document.getElementById('fr-wrap').style.display = 'block';
+      document.getElementById('fr-list').innerHTML = sorted.map((p, i) => {
+        const a = avStyle(p.name); const isMe = p.username === CU.username;
+        return `<div class="fr-row${i === 0 ? ' win' : ''}">
+          <span class="fr-rank">${medals[i] || i+1}</span>
+          <div class="fr-av" style="background:${a.bg};color:${a.col}">${a.txt}</div>
+          <span class="fr-name">${p.name}${isMe ? ' 👈' : ''}</span>
+          <span class="fr-sc">${p.score || 0}</span>
+        </div>`;
+      }).join('');
+    }
+    if (isHost) { await fbPatch(`rooms/${roomCode}`, { status: 'finished' }); setTimeout(() => fbDel(`rooms/${roomCode}`), 30000); }
+    clearInterval(pollTmr); isFriend = false; roomCode = ''; isHost = false;
+  }
+
+  // Global LB
+  const all = await loadAllScores();
+  let filt = all.filter(s => s.diff === diff).sort((a, b) => b.score - a.score);
+  const rank = filt.findIndex(s => s.username === CU.username) + 1 || '?';
+  document.getElementById('r-r').textContent = `#${rank}`;
+  const ic = ['🏆', '🥇', '🥈'];
+  document.getElementById('r-icon').textContent = typeof rank === 'number' && rank <= 3 ? ic[rank - 1] : score >= 500 ? '🎯' : '⭐';
+  document.getElementById('r-t3').innerHTML = filt.length ? top3(filt) : '';
+  document.getElementById('r-lb').innerHTML = filt.slice(3, 10).map((s, i) => lbRow(s, i + 3)).join('');
 }
 
-function playAgain(){qs=genQs(diff);qi=0;score=0;cor=0;wrg=0;startT=Date.now();showS('s-quiz');loadQ();navActive('play');}
-function goHome(){showS('s-home');loadLb(ctab);navActive('home');}
-function goSettings(){updProfile();showS('s-settings');navActive('set');}
-function shareResult(){
-  const txt=`${CU.name} MathRace da ${lastSc} ball to'pladi! 🧮\n(${DL[diff]}, ${cor}/10 to'g'ri)\nSen ham sinab ko'r!`;
-  if(navigator.share)navigator.share({title:'MathRace',text:txt}).catch(()=>{});
-  else navigator.clipboard.writeText(txt).then(()=>toast('Nusxalandi! 📋'));
+function again() {
+  if (isFriend || roomCode) { goFriends(); return; }
+  startSolo();
+}
+function goHome()    { showS('s-home'); loadLB(ctab); navA('home'); }
+function goFriends() { document.getElementById('join-box').style.display='none'; document.getElementById('join-msg').textContent=''; showS('s-friends'); navA('friends'); }
+function goSet()     { updProf(); showS('s-set'); navA('set'); }
+function share() {
+  const txt = `${CU.name} MathRace da ${lastSc} ball to'pladi! 🧮\n(${DL[diff]}, ${cor}/10 to'g'ri)\nSen ham sinab ko'r!`;
+  if (navigator.share) navigator.share({ title: 'MathRace', text: txt }).catch(() => {});
+  else navigator.clipboard.writeText(txt).then(() => toast('Nusxalandi! 📋'));
 }
 
-// ══════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════
-function navTo(t){if(t==='home')goHome();else if(t==='play')startGame();else if(t==='set')goSettings();}
-function navActive(t){
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  const m={home:'nav-home',play:'nav-play',set:'nav-set'};
-  const el=document.getElementById(m[t]);if(el)el.classList.add('active');
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+function navTo(t) { if (t==='home') goHome(); else if (t==='friends') goFriends(); else if (t==='set') goSet(); }
+function navA(t) {
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  const m = { home:'nb-home', friends:'nb-friends', set:'nb-set' };
+  const el = document.getElementById(m[t]); if (el) el.classList.add('on');
 }
-function showS(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function showS(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2600); }
 
-// ══════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
 loadCfg();
-CU=getCU();
-if(CU){afterLogin();}
+CU = getCU();
+if (CU) afterLogin();
 
-// keyboard shortcuts
-document.getElementById('l-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-document.getElementById('r-pass2').addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
-document.getElementById('jinp').addEventListener('keydown',e=>{if(e.key==='Enter')joinFriend();});
+document.getElementById('l-p').addEventListener('keydown',  e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('r-p2').addEventListener('keydown', e => { if (e.key === 'Enter') doReg(); });
+document.getElementById('jinp').addEventListener('keydown',  e => { if (e.key === 'Enter') joinInv(); });
+document.getElementById('room-inp').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
 
-// Auto refresh every 15s
-setInterval(()=>{if(document.getElementById('s-home').classList.contains('active'))loadLb(ctab);},15000);
+setInterval(() => { if (document.getElementById('s-home').classList.contains('on')) loadLB(ctab); }, 15000);
 </script>
 </body>
-   </html>
+  </html>
