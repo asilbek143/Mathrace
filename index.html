@@ -909,18 +909,9 @@ select {
     </div>
   </div>
 
-  <div class="card" style="animation:up .35s .1s var(--ease) both">
-    <div class="lbl">Taklif kodi</div>
-    <div id="inv-sec">
-      <button class="btn btn-full" onclick="genInv()" style="margin-bottom:8px">Taklif kodi yaratish 🔗</button>
-    </div>
-    <div class="divider"></div>
-    <div class="lbl">Kod bilan qo'shilish</div>
-    <div class="join-row">
-      <input id="jinp" placeholder="KODNI KIRITING" maxlength="6"/>
-      <button class="btn btn-primary" onclick="joinInv()">Qo'shilish</button>
-    </div>
-    <div id="jst"></div>
+  <div style="display:none">
+    <div id="inv-sec"></div>
+    <input id="jinp"/><div id="jst"></div>
   </div>
 
   <div class="card" style="animation:up .35s .15s var(--ease) both">
@@ -930,7 +921,7 @@ select {
     </div>
     <div id="lb-count" class="lb-count"></div>
     <div class="lb-tabs">
-      <div class="lb-tab on"  onclick="lbTab(this,'all')">Hammasi</div>
+      <div class="lb-tab on"  onclick="lbTab(this,'all')">O'yinchilar</div>
       <div class="lb-tab"     onclick="lbTab(this,'easy')">Oson</div>
       <div class="lb-tab"     onclick="lbTab(this,'medium')">O'rtacha</div>
       <div class="lb-tab"     onclick="lbTab(this,'hard')">Qiyin</div>
@@ -1395,10 +1386,24 @@ async function loadLB(filter) {
   document.getElementById('lb-home').innerHTML = '<div class="lb-load"><span class="spin"></span>Firebase dan yuklanmoqda...</div>';
   document.getElementById('t3-home').innerHTML = '';
   const all = await loadAllScores();
-  let filt = filter === 'all' ? [...all] : all.filter(s => s.diff === filter);
+  // Har bir o'yinchidan 1 ta eng yuqori natija
+  let filt;
+  if (filter === 'all') {
+    const best = {};
+    for (const s of all) {
+      if (!best[s.username] || s.score > best[s.username].score) best[s.username] = s;
+    }
+    filt = Object.values(best);
+  } else {
+    const best = {};
+    for (const s of all.filter(x => x.diff === filter)) {
+      if (!best[s.username] || s.score > best[s.username].score) best[s.username] = s;
+    }
+    filt = Object.values(best);
+  }
   filt.sort((a, b) => b.score - a.score);
-  const uniq = [...new Set(all.map(s => s.username))].length;
-  document.getElementById('lb-count').textContent = uniq > 0 ? `🌍 ${uniq} nafar o'yinchi dunyo bo'yicha` : '';
+  const uniq = filt.length;
+  document.getElementById('lb-count').textContent = uniq > 0 ? `🌍 ${uniq} nafar o'yinchi` : '';
   if (!filt.length) {
     document.getElementById('lb-home').innerHTML = '<div class="lb-empty">Hali hech kim o\'ynamagan! 🚀<br>Birinchi bo\'ling!</div>';
     return;
@@ -1684,7 +1689,12 @@ async function endGame() {
 
   // Global LB
   const all = await loadAllScores();
-  let filt = all.filter(s => s.diff === diff).sort((a, b) => b.score - a.score);
+  // Har bir o'yinchidan eng yuqori 1 ta natija (shu qiyinlik uchun)
+  const bestMap = {};
+  for (const s of all.filter(s => s.diff === diff)) {
+    if (!bestMap[s.username] || s.score > bestMap[s.username].score) bestMap[s.username] = s;
+  }
+  let filt = Object.values(bestMap).sort((a, b) => b.score - a.score);
   const rank = filt.findIndex(s => s.username === CU.username) + 1 || '?';
   document.getElementById('r-r').textContent = `#${rank}`;
   const ic = ['🏆', '🥇', '🥈'];
@@ -1733,4 +1743,4 @@ document.getElementById('room-inp').addEventListener('keydown', e => { if (e.key
 setInterval(() => { if (document.getElementById('s-home').classList.contains('on')) loadLB(ctab); }, 15000);
 </script>
 </body>
-  </html>
+   </html>
