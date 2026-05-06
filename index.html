@@ -920,7 +920,12 @@ select {
       <button class="btn btn-ghost btn-sm" onclick="loadLB(ctab)">↻</button>
     </div>
     <div id="lb-count" class="lb-count"></div>
-    <div style="font-size:11px;color:var(--t1);margin-bottom:10px">⬇️ Umumiy ball bo'yicha — har o'ynaganda qo'shiladi</div>
+    <div class="lb-tabs">
+      <div class="lb-tab on"  onclick="lbTab(this,'all')">Hammasi</div>
+      <div class="lb-tab"     onclick="lbTab(this,'easy')">Oson</div>
+      <div class="lb-tab"     onclick="lbTab(this,'medium')">O'rtacha</div>
+      <div class="lb-tab"     onclick="lbTab(this,'hard')">Qiyin</div>
+    </div>
     <div id="t3-home"></div>
     <div id="lb-home"><div class="lb-load">⏳ Yuklanmoqda...</div></div>
   </div>
@@ -1287,18 +1292,29 @@ async function syncUser() {
    SCORES — AYNAN ISHLAYDIGAN KOD
 ═══════════════════════════════════════ */
 async function saveScore(entry) {
-  // Har o'ynaganda umumiy ballga qo'shib ketadi
-  const key = `${entry.username}`;
+  // Har o'ynaganida umumiy ballga qo'shiladi (almashtirmaydi)
+  const key = entry.username;
   const ex = await fbGet(`scores/${key}`);
-  const prevTotal = ex ? (ex.totalScore || 0) : 0;
-  const newTotal = prevTotal + entry.score;
+  
+  // Oldingi qiyinlik balllarini saqlab qo'yamiz
+  const prevEasy   = ex ? (ex.easyScore   || 0) : 0;
+  const prevMedium = ex ? (ex.mediumScore  || 0) : 0;
+  const prevHard   = ex ? (ex.hardScore    || 0) : 0;
+  
+  // Yangi o'yindagi ballni qo'shamiz
+  const newEasy   = prevEasy   + (entry.diff === 'easy'   ? entry.score : 0);
+  const newMedium = prevMedium + (entry.diff === 'medium' ? entry.score : 0);
+  const newHard   = prevHard   + (entry.diff === 'hard'   ? entry.score : 0);
+
   const updated = {
     username: entry.username,
     name: entry.name,
-    totalScore: newTotal,
+    totalScore: newEasy + newMedium + newHard,
+    easyScore:   newEasy,
+    mediumScore: newMedium,
+    hardScore:   newHard,
     games: (ex ? (ex.games || 0) : 0) + 1,
     lastDiff: entry.diff,
-    lastTime: entry.time,
     date: entry.date,
   };
   await fbSet(`scores/${key}`, updated);
@@ -1371,7 +1387,12 @@ function top3(list) {
     <div class="t3 ${md[i].c}">
       <div class="t3-med">${md[i].i}</div>
       <div class="t3-nm">${s.name}</div>
-      <div class="t3-sc">${s.totalScore || s.score || 0}</div>
+      <div class="t3-sc">${
+      ctab==='easy' ? (s.easyScore||0) :
+      ctab==='medium' ? (s.mediumScore||0) :
+      ctab==='hard' ? (s.hardScore||0) :
+      (s.totalScore||0)
+    }</div>
       <div class="t3-sub">${s.games || 1} ta o'yin</div>
     </div>`).join('')}</div>`;
 }
@@ -1384,7 +1405,12 @@ function lbRow(s, i) {
     <div class="lb-av" style="background:${a.bg};color:${a.col}">${a.txt}</div>
     <span class="lb-nm">${s.name}${isMe ? ' 👈' : ''}</span>
     <span class="lb-df" style="background:rgba(108,99,255,.12);color:var(--a2)">${s.games || 1} o'yin</span>
-    <span class="lb-sc">${s.totalScore || s.score || 0}</span>
+    <span class="lb-sc">${
+      ctab==='easy' ? (s.easyScore||0) :
+      ctab==='medium' ? (s.mediumScore||0) :
+      ctab==='hard' ? (s.hardScore||0) :
+      (s.totalScore||0)
+    }</span>
   </div>`;
 }
 async function loadLB(filter) {
@@ -1392,11 +1418,21 @@ async function loadLB(filter) {
   document.getElementById('lb-home').innerHTML = '<div class="lb-load"><span class="spin"></span>Firebase dan yuklanmoqda...</div>';
   document.getElementById('t3-home').innerHTML = '';
   const all = await loadAllScores();
-  // Umumiy ball — hammasi bir joyda (filter yo'q, hamma ko'rinadi)
   let filt = [...all];
-  filt.sort((a, b) => (b.totalScore || b.score || 0) - (a.totalScore || a.score || 0));
-  const uniq = filt.length;
-  document.getElementById('lb-count').textContent = uniq > 0 ? `🌍 ${uniq} nafar o'yinchi` : '';
+  if (filter === 'all') {
+    filt.sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
+    filt = filt.filter(s => (s.totalScore || 0) > 0);
+  } else if (filter === 'easy') {
+    filt.sort((a, b) => (b.easyScore || 0) - (a.easyScore || 0));
+    filt = filt.filter(s => (s.easyScore || 0) > 0);
+  } else if (filter === 'medium') {
+    filt.sort((a, b) => (b.mediumScore || 0) - (a.mediumScore || 0));
+    filt = filt.filter(s => (s.mediumScore || 0) > 0);
+  } else if (filter === 'hard') {
+    filt.sort((a, b) => (b.hardScore || 0) - (a.hardScore || 0));
+    filt = filt.filter(s => (s.hardScore || 0) > 0);
+  }
+  document.getElementById('lb-count').textContent = filt.length > 0 ? `🌍 ${filt.length} nafar o'yinchi` : '';
   if (!filt.length) {
     document.getElementById('lb-home').innerHTML = '<div class="lb-empty">Hali hech kim o\'ynamagan! 🚀<br>Birinchi bo\'ling!</div>';
     return;
@@ -1758,5 +1794,4 @@ document.getElementById('room-inp').addEventListener('keydown', e => { if (e.key
 setInterval(() => { if (document.getElementById('s-home').classList.contains('on')) loadLB(ctab); }, 15000);
 </script>
 </body>
-</html>
-
+   </html>
