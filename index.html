@@ -920,12 +920,7 @@ select {
       <button class="btn btn-ghost btn-sm" onclick="loadLB(ctab)">↻</button>
     </div>
     <div id="lb-count" class="lb-count"></div>
-    <div class="lb-tabs">
-      <div class="lb-tab on"  onclick="lbTab(this,'all')">O'yinchilar</div>
-      <div class="lb-tab"     onclick="lbTab(this,'easy')">Oson</div>
-      <div class="lb-tab"     onclick="lbTab(this,'medium')">O'rtacha</div>
-      <div class="lb-tab"     onclick="lbTab(this,'hard')">Qiyin</div>
-    </div>
+    <div style="font-size:11px;color:var(--t1);margin-bottom:10px">⬇️ Umumiy ball bo'yicha — har o'ynaganda qo'shiladi</div>
     <div id="t3-home"></div>
     <div id="lb-home"><div class="lb-load">⏳ Yuklanmoqda...</div></div>
   </div>
@@ -1050,7 +1045,7 @@ select {
     <div class="prof-sub"  id="prof-un">—</div>
     <div class="prof-stats">
       <div class="ps"><div class="ps-v" id="ps-g">0</div><div class="ps-l">O'yin</div></div>
-      <div class="ps"><div class="ps-v" id="ps-b">0</div><div class="ps-l">Eng yuqori</div></div>
+      <div class="ps"><div class="ps-v" id="ps-b">0</div><div class="ps-l">Jami ball</div></div>
       <div class="ps"><div class="ps-v" id="ps-a">—</div><div class="ps-l">Aniqlik</div></div>
     </div>
   </div>
@@ -1272,7 +1267,7 @@ function updHdr() {
   if (!CU) return;
   setAvi('h-av', CU.name);
   document.getElementById('h-nm').textContent = CU.name;
-  document.getElementById('h-sb').textContent = `${CU.games || 0} o'yin · Eng yuqori: ${CU.bestScore || 0}`;
+  document.getElementById('h-sb').textContent = `${CU.games || 0} ta o'yin · Jami: ${CU.totalScore || 0} ball`;
 }
 function updProf() {
   if (!CU) return;
@@ -1280,7 +1275,7 @@ function updProf() {
   document.getElementById('prof-nm').textContent = CU.name;
   document.getElementById('prof-un').textContent = '@' + CU.username;
   document.getElementById('ps-g').textContent = CU.games || 0;
-  document.getElementById('ps-b').textContent = CU.bestScore || 0;
+  document.getElementById('ps-b').textContent = CU.totalScore || 0;
   const tot = (CU.totalCor || 0) + (CU.totalWrg || 0);
   document.getElementById('ps-a').textContent = tot > 0 ? Math.round((CU.totalCor || 0) / tot * 100) + '%' : '—';
 }
@@ -1292,20 +1287,33 @@ async function syncUser() {
    SCORES — AYNAN ISHLAYDIGAN KOD
 ═══════════════════════════════════════ */
 async function saveScore(entry) {
-  const key = `${entry.username}_${entry.diff}`;
+  // Har o'ynaganda umumiy ballga qo'shib ketadi
+  const key = `${entry.username}`;
   const ex = await fbGet(`scores/${key}`);
-  if (!ex || entry.score > ex.score) {
-    await fbSet(`scores/${key}`, entry);
-  }
+  const prevTotal = ex ? (ex.totalScore || 0) : 0;
+  const newTotal = prevTotal + entry.score;
+  const updated = {
+    username: entry.username,
+    name: entry.name,
+    totalScore: newTotal,
+    games: (ex ? (ex.games || 0) : 0) + 1,
+    lastDiff: entry.diff,
+    lastTime: entry.time,
+    date: entry.date,
+  };
+  await fbSet(`scores/${key}`, updated);
 }
 async function loadAllScores() {
   const data = await fbGet('scores');
   if (!data) return [];
-  return Object.values(data);
+  return Object.values(data).map(s => ({
+    ...s,
+    score: s.totalScore || s.score || 0  // umumiy ball
+  }));
 }
 async function clearScores() {
   if (!CU || !confirm('Barcha natijalaringiz o\'chiriladi?')) return;
-  for (const d of ['easy', 'medium', 'hard']) await fbDel(`scores/${CU.username}_${d}`);
+  await fbDel(`totals/${CU.username}`);
   CU.bestScore = 0; CU.games = 0; CU.totalCor = 0; CU.totalWrg = 0;
   await syncUser(); updHdr(); updProf(); loadLB(ctab);
   toast('Natijalaringiz o\'chirildi ✓');
@@ -1363,22 +1371,20 @@ function top3(list) {
     <div class="t3 ${md[i].c}">
       <div class="t3-med">${md[i].i}</div>
       <div class="t3-nm">${s.name}</div>
-      <div class="t3-sc">${s.score}</div>
-      <div class="t3-sub">${DL[s.diff] || s.diff} · ${s.time}s</div>
+      <div class="t3-sc">${s.totalScore || s.score || 0}</div>
+      <div class="t3-sub">${s.games || 1} ta o'yin</div>
     </div>`).join('')}</div>`;
 }
 function lbRow(s, i) {
   const a = avStyle(s.name);
   const isMe = CU && s.username === CU.username;
-  const dc = DC[s.diff] || DC.easy;
   const ri = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
   return `<div class="lb-row${isMe ? ' me' : ''}" style="animation-delay:${i * .04}s">
     <span class="lb-rk">${ri}</span>
     <div class="lb-av" style="background:${a.bg};color:${a.col}">${a.txt}</div>
     <span class="lb-nm">${s.name}${isMe ? ' 👈' : ''}</span>
-    <span class="lb-df" style="background:${dc[0]};color:${dc[1]}">${DL[s.diff] || s.diff}</span>
-    <span class="lb-tm">${s.time}s</span>
-    <span class="lb-sc">${s.score}</span>
+    <span class="lb-df" style="background:rgba(108,99,255,.12);color:var(--a2)">${s.games || 1} o'yin</span>
+    <span class="lb-sc">${s.totalScore || s.score || 0}</span>
   </div>`;
 }
 async function loadLB(filter) {
@@ -1386,22 +1392,9 @@ async function loadLB(filter) {
   document.getElementById('lb-home').innerHTML = '<div class="lb-load"><span class="spin"></span>Firebase dan yuklanmoqda...</div>';
   document.getElementById('t3-home').innerHTML = '';
   const all = await loadAllScores();
-  // Har bir o'yinchidan 1 ta eng yuqori natija
-  let filt;
-  if (filter === 'all') {
-    const best = {};
-    for (const s of all) {
-      if (!best[s.username] || s.score > best[s.username].score) best[s.username] = s;
-    }
-    filt = Object.values(best);
-  } else {
-    const best = {};
-    for (const s of all.filter(x => x.diff === filter)) {
-      if (!best[s.username] || s.score > best[s.username].score) best[s.username] = s;
-    }
-    filt = Object.values(best);
-  }
-  filt.sort((a, b) => b.score - a.score);
+  // Umumiy ball — hammasi bir joyda (filter yo'q, hamma ko'rinadi)
+  let filt = [...all];
+  filt.sort((a, b) => (b.totalScore || b.score || 0) - (a.totalScore || a.score || 0));
   const uniq = filt.length;
   document.getElementById('lb-count').textContent = uniq > 0 ? `🌍 ${uniq} nafar o'yinchi` : '';
   if (!filt.length) {
@@ -1560,10 +1553,36 @@ function mkQ(text, a) {
   while (o.size < 4 && t < 80) { t++; const d = rn(1, Math.max(3, Math.abs(Math.round(a * .3)) || 5)); o.add(a + (Math.random() > .5 ? d : -d)); }
   return { text, ans: a, opts: [...o].sort(() => Math.random() - .5) };
 }
-function gE() { const op = rn(0,1)?'+':'-'; let a=rn(1,20),b=rn(1,20); if(op==='-'&&b>a)[a,b]=[b,a]; return mkQ(`${a} ${op} ${b} = ?`, op==='+'?a+b:a-b); }
-function gM() { const t=rn(0,3); if(t===0){const a=rn(2,12),b=rn(2,12);return mkQ(`${a} × ${b} = ?`,a*b);} if(t===1){const b=rn(2,12),a=b*rn(2,10);return mkQ(`${a} ÷ ${b} = ?`,a/b);} if(t===2){const a=rn(10,50),b=rn(10,50);return mkQ(`${a} + ${b} = ?`,a+b);} let a=rn(20,80),b=rn(10,40);if(b>a)[a,b]=[b,a];return mkQ(`${a} − ${b} = ?`,a-b); }
-function gH() { const t=rn(0,4); if(t===0){const a=rn(2,15),b=rn(2,15),c=rn(1,10);return mkQ(`${a}×${b}+${c}=?`,a*b+c);} if(t===1){const n=rn(2,12);return mkQ(`${n}² = ?`,n*n);} if(t===2){const sq=[4,9,16,25,36,49,64,81,100,121,144];const n=sq[rn(0,sq.length-1)];return mkQ(`√${n} = ?`,Math.sqrt(n));} if(t===3){const a=rn(2,9),b=rn(2,9);return mkQ(`${a}% dan ${b*10} = ?`,Math.round(a*b*10/100));} const a=rn(2,20),b=rn(2,20),c=rn(2,10);const v=a*b-c;if(v<1)return gH();return mkQ(`${a}×${b}−${c}=?`,v); }
-function genQs(d) { const f=d==='easy'?gE:d==='medium'?gM:gH; return Array.from({length:10},f); }
+function gE() {
+  const t = rn(0,3);
+  if(t===0){const op=rn(0,1)?'+':'-';let a=rn(1,30),b=rn(1,30);if(op==='-'&&b>a)[a,b]=[b,a];return mkQ(`${a} ${op} ${b} = ?`,op==='+'?a+b:a-b);}
+  if(t===1){const a=rn(1,10),b=rn(1,10);return mkQ(`${a} + ${b} + ${rn(1,10)} = ?`,a+b+rn(1,10));}
+  if(t===2){const a=rn(10,50),b=rn(1,10);return mkQ(`${a} - ${b} = ?`,a-b);}
+  const a=rn(2,5),b=rn(1,9);return mkQ(`${a} × ${b} = ?`,a*b);
+}
+function gM() {
+  const t = rn(0,6);
+  if(t===0){const a=rn(2,15),b=rn(2,15);return mkQ(`${a} × ${b} = ?`,a*b);}
+  if(t===1){const b=rn(2,12),a=b*rn(2,10);return mkQ(`${a} ÷ ${b} = ?`,a/b);}
+  if(t===2){const a=rn(10,99),b=rn(10,99);return mkQ(`${a} + ${b} = ?`,a+b);}
+  if(t===3){let a=rn(20,99),b=rn(10,50);if(b>a)[a,b]=[b,a];return mkQ(`${a} − ${b} = ?`,a-b);}
+  if(t===4){const n=rn(2,10);return mkQ(`${n}² = ?`,n*n);}
+  if(t===5){const a=rn(2,9),b=rn(2,9),c=rn(1,5);return mkQ(`${a} × ${b} + ${c} = ?`,a*b+c);}
+  const a=rn(10,20),b=rn(2,5);return mkQ(`${a} × ${b} = ?`,a*b);
+}
+function gH() {
+  const t = rn(0,8);
+  if(t===0){const a=rn(2,20),b=rn(2,20),c=rn(1,15);return mkQ(`${a}×${b}+${c}=?`,a*b+c);}
+  if(t===1){const n=rn(2,15);return mkQ(`${n}² = ?`,n*n);}
+  if(t===2){const sq=[4,9,16,25,36,49,64,81,100,121,144,169,196,225];const n=sq[rn(0,sq.length-1)];return mkQ(`√${n} = ?`,Math.sqrt(n));}
+  if(t===3){const a=rn(1,9),b=rn(1,9);return mkQ(`${a*10}% dan ${b*10} = ?`,Math.round(a*b/10*10));}
+  if(t===4){const a=rn(2,20),b=rn(2,20),c=rn(2,10);const v=a*b-c;if(v<1)return gH();return mkQ(`${a}×${b}−${c}=?`,v);}
+  if(t===5){const a=rn(10,30),b=rn(10,30);return mkQ(`${a}² − ${b}² = ?`,(a-b)*(a+b));}
+  if(t===6){const a=rn(2,12),b=rn(2,5),c=rn(2,5);return mkQ(`${a} × ${b} × ${c} = ?`,a*b*c);}
+  if(t===7){const b=rn(3,15),a=b*rn(3,12);return mkQ(`${a} ÷ ${b} = ?`,a/b);}
+  const a=rn(100,999),b=rn(10,99);return mkQ(`${a} + ${b} = ?`,a+b);
+}
+function genQs(d) { const f=d==='easy'?gE:d==='medium'?gM:gH; return Array.from({length:20},f); }
 
 function startSolo() {
   isFriend = false;
@@ -1583,8 +1602,8 @@ function loadQ() {
   if (qi >= qs.length) { endGame(); return; }
   ans = false;
   const q = qs[qi];
-  document.getElementById('qnum').textContent   = `${qi+1}/10`;
-  document.getElementById('pbar').style.width   = `${(qi+1)*10}%`;
+  document.getElementById('qnum').textContent   = `${qi+1}/20`;
+  document.getElementById('pbar').style.width   = `${Math.round((qi+1)/20*100)}%`;
   document.getElementById('qbadge').textContent = `${score} ball`;
   document.getElementById('qtext').textContent  = q.text;
   const tl = diff==='easy'?15:diff==='medium'?12:10;
@@ -1660,10 +1679,11 @@ async function endGame() {
   await saveScore(entry);
 
   // User stats
-  CU.games     = (CU.games     || 0) + 1;
-  CU.totalCor  = (CU.totalCor  || 0) + cor;
-  CU.totalWrg  = (CU.totalWrg  || 0) + wrg;
-  if (score > CU.bestScore) CU.bestScore = score;
+  CU.games      = (CU.games      || 0) + 1;
+  CU.totalCor   = (CU.totalCor   || 0) + cor;
+  CU.totalWrg   = (CU.totalWrg   || 0) + wrg;
+  CU.totalScore = (CU.totalScore || 0) + score;
+  if (score > (CU.bestScore || 0)) CU.bestScore = score;
   await syncUser(); updHdr(); updProf();
 
   // Friends result
@@ -1687,20 +1707,15 @@ async function endGame() {
     clearInterval(pollTmr); isFriend = false; roomCode = ''; isHost = false;
   }
 
-  // Global LB
+  // Global LB - umumiy ball bo'yicha
   const all = await loadAllScores();
-  // Har bir o'yinchidan eng yuqori 1 ta natija (shu qiyinlik uchun)
-  const bestMap = {};
-  for (const s of all.filter(s => s.diff === diff)) {
-    if (!bestMap[s.username] || s.score > bestMap[s.username].score) bestMap[s.username] = s;
-  }
-  let filt = Object.values(bestMap).sort((a, b) => b.score - a.score);
-  const rank = filt.findIndex(s => s.username === CU.username) + 1 || '?';
+  let filt = [...all].sort((a, b) => (b.totalScore || b.score || 0) - (a.totalScore || a.score || 0));
+  const rank = filt.findIndex(s => s.username === CU.username) + 1 || filt.length + 1;
   document.getElementById('r-r').textContent = `#${rank}`;
   const ic = ['🏆', '🥇', '🥈'];
   document.getElementById('r-icon').textContent = typeof rank === 'number' && rank <= 3 ? ic[rank - 1] : score >= 500 ? '🎯' : '⭐';
   document.getElementById('r-t3').innerHTML = filt.length ? top3(filt) : '';
-  document.getElementById('r-lb').innerHTML = filt.slice(3, 10).map((s, i) => lbRow(s, i + 3)).join('');
+  document.getElementById('r-lb').innerHTML = filt.slice(3, 12).map((s, i) => lbRow(s, i + 3)).join('');
 }
 
 function again() {
@@ -1743,4 +1758,5 @@ document.getElementById('room-inp').addEventListener('keydown', e => { if (e.key
 setInterval(() => { if (document.getElementById('s-home').classList.contains('on')) loadLB(ctab); }, 15000);
 </script>
 </body>
-   </html>
+</html>
+
