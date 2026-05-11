@@ -6,7 +6,9 @@
 <title>MathRace 🧮</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
 <style>
-
+/* ═══════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════ */
 :root {
   --c0: #08080f;
   --c1: #0e0e1a;
@@ -45,6 +47,9 @@
   --r: #dc2626;
 }
 
+/* ═══════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
 html { -webkit-tap-highlight-color: transparent }
 body {
@@ -59,6 +64,7 @@ body {
   overflow-x: hidden;
 }
 
+/* Background glow */
 body::before {
   content: '';
   position: fixed;
@@ -1062,12 +1068,26 @@ select {
     <span class="q-num" id="qnum">1/30</span>
     <div class="prog-wrap"><div class="prog-bar" id="pbar" style="width:10%"></div></div>
     <span class="q-badge" id="qbadge">0 ball</span>
+    <button class="btn btn-danger btn-sm" onclick="quitQuiz()" title="O'yindan chiqish" style="padding:5px 10px;font-size:12px;flex-shrink:0">✕ Chiqish</button>
   </div>
   <div class="timer-wrap"><div class="timer-bar" id="tbar" style="width:100%;background:var(--a)"></div></div>
   <div id="fbar" class="f-bar" style="display:none"></div>
   <div class="q-card"><div class="q-text" id="qtext">?</div><div class="q-hint" id="qhint"></div></div>
   <div class="fb-msg" id="fbmsg"></div>
   <div class="opts-grid" id="opts"></div>
+</div>
+
+<!-- Quit confirm modal -->
+<div id="quit-modal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div style="background:var(--c1);border:1px solid var(--c4);border-radius:18px;padding:1.8rem 1.5rem;max-width:320px;width:90%;text-align:center;animation:up .25s var(--ease) both">
+    <div style="font-size:40px;margin-bottom:10px">🚪</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:6px">O'yindan chiqasizmi?</div>
+    <div style="font-size:13px;color:var(--t1);margin-bottom:20px">Joriy natijangiz saqlanmaydi.</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost btn-full" onclick="closeQuitModal()">Davom etish</button>
+      <button class="btn btn-danger btn-full" onclick="confirmQuit()">Chiqish ✕</button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ RESULT ═══ -->
@@ -1350,6 +1370,9 @@ async function syncUser() {
   await fbSet(`users/${CU.username}`, CU); saveCU(CU);
 }
 
+/* ═══════════════════════════════════════
+   SCORES — AYNAN ISHLAYDIGAN KOD
+═══════════════════════════════════════ */
 async function saveScore(entry) {
   // Har o'ynaganida umumiy ballga qo'shiladi (almashtirmaydi)
   const key = entry.username;
@@ -1834,6 +1857,29 @@ function again() {
   if (isFriend || roomCode) { goFriends(); return; }
   startSolo();
 }
+
+function quitQuiz() {
+  clearInterval(tInt);
+  const modal = document.getElementById('quit-modal');
+  modal.style.display = 'flex';
+}
+function closeQuitModal() {
+  document.getElementById('quit-modal').style.display = 'none';
+  // resume timer if question not answered
+  if (!ans) {
+    const tl = diff==='easy'?15:diff==='medium'?12:10;
+    const b = document.getElementById('tbar');
+    b.style.transition = `width ${tLeft}s linear, background ${tLeft}s linear`;
+    b.style.width = '0%'; b.style.background = 'var(--r)';
+    tInt = setInterval(() => { tLeft--; if (tLeft <= 0) { clearInterval(tInt); if (!ans) tOut(); } }, 1000);
+  }
+}
+function confirmQuit() {
+  document.getElementById('quit-modal').style.display = 'none';
+  clearInterval(tInt);
+  isFriend = false; roomCode = ''; isHost = false;
+  goHome();
+}
 function goHome()    { showS('s-home'); loadLB(ctab); navA('home'); }
 function goFriends() { document.getElementById('join-box').style.display='none'; document.getElementById('join-msg').textContent=''; showS('s-friends'); navA('friends'); }
 function goSet()     { updProf(); showS('s-set'); navA('set'); }
@@ -1846,7 +1892,13 @@ function share() {
 /* ═══════════════════════════════════════
    NAV
 ═══════════════════════════════════════ */
-function navTo(t) { if (t==='home') goHome(); else if (t==='friends') goFriends(); else if (t==='set') goSet(); }
+function navTo(t) {
+  if (document.getElementById('s-quiz').classList.contains('on')) {
+    toast("Kechirasiz, siz o'yindasiz! ✕ Chiqish tugmasini bosing.");
+    return;
+  }
+  if (t==='home') goHome(); else if (t==='friends') goFriends(); else if (t==='set') goSet();
+}
 function navA(t) {
   document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
   const m = { home:'nb-home', friends:'nb-friends', set:'nb-set' };
