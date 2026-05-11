@@ -6,9 +6,7 @@
 <title>MathRace 🧮</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
 <style>
-/* ═══════════════════════════════════════
-   TOKENS
-═══════════════════════════════════════ */
+
 :root {
   --c0: #08080f;
   --c1: #0e0e1a;
@@ -47,9 +45,6 @@
   --r: #dc2626;
 }
 
-/* ═══════════════════════════════════════
-   RESET & BASE
-═══════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
 html { -webkit-tap-highlight-color: transparent }
 body {
@@ -64,7 +59,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Background glow */
 body::before {
   content: '';
   position: fixed;
@@ -344,6 +338,23 @@ input.big {
   margin-bottom: 5px;
   letter-spacing: .4px;
 }
+.pw-wrap { position: relative }
+.pw-wrap input { padding-right: 42px }
+.eye-btn {
+  position: absolute;
+  right: 10px; top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 17px;
+  color: var(--t2);
+  padding: 4px;
+  line-height: 1;
+  transition: color .18s;
+  user-select: none;
+}
+.eye-btn:hover { color: var(--a2) }
 .msg {
   border-radius: var(--radius);
   padding: 10px 14px;
@@ -677,6 +688,56 @@ input.big {
   border-color: var(--r) !important;
   background: rgba(255,77,109,.08) !important;
   color: var(--r) !important;
+  animation: shake .4s var(--ease);
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0) }
+  15%      { transform: translateX(-7px) }
+  30%      { transform: translateX(7px) }
+  45%      { transform: translateX(-5px) }
+  60%      { transform: translateX(5px) }
+  75%      { transform: translateX(-3px) }
+  90%      { transform: translateX(3px) }
+}
+
+/* Confetti canvas */
+#confetti-canvas {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Wrong screen flash */
+.screen-flash-red {
+  animation: flashRed .4s ease;
+}
+@keyframes flashRed {
+  0%   { background-color: rgba(255,77,109,0) }
+  30%  { background-color: rgba(255,77,109,.13) }
+  100% { background-color: rgba(255,77,109,0) }
+}
+.screen-flash-green {
+  animation: flashGreen .5s ease;
+}
+@keyframes flashGreen {
+  0%   { background-color: rgba(16,232,136,0) }
+  30%  { background-color: rgba(16,232,136,.11) }
+  100% { background-color: rgba(16,232,136,0) }
+}
+
+/* Stars burst */
+.star-burst {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  font-size: 24px;
+  animation: starFly .9s ease-out forwards;
+}
+@keyframes starFly {
+  0%   { opacity: 1; transform: translate(0,0) scale(1) }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.3) }
 }
 .opt:disabled { cursor: default }
 
@@ -867,14 +928,14 @@ select {
     <div id="aok"  class="msg msg-ok"></div>
     <div id="f-login">
       <div class="auth-field"><label>Foydalanuvchi nomi</label><input id="l-u" placeholder="username" autocomplete="username"/></div>
-      <div class="auth-field"><label>Parol</label><input id="l-p" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+      <div class="auth-field"><label>Parol</label><div class="pw-wrap"><input id="l-p" type="password" placeholder="••••••••" autocomplete="current-password"/><button class="eye-btn" type="button" onclick="togglePw('l-p',this)" title="Ko'rish">👁️</button></div></div>
       <button class="btn btn-primary btn-full" onclick="doLogin()" style="margin-top:6px">Kirish →</button>
     </div>
     <div id="f-reg" style="display:none">
       <div class="auth-field"><label>Ism</label><input id="r-n" placeholder="Ali Valiyev" maxlength="20"/></div>
       <div class="auth-field"><label>Username</label><input id="r-u" placeholder="alidev" maxlength="16"/></div>
-      <div class="auth-field"><label>Parol</label><input id="r-p" type="password" placeholder="Kamida 6 ta belgi"/></div>
-      <div class="auth-field"><label>Parolni tasdiqlang</label><input id="r-p2" type="password" placeholder="••••••••"/></div>
+      <div class="auth-field"><label>Parol</label><div class="pw-wrap"><input id="r-p" type="password" placeholder="Kamida 6 ta belgi"/><button class="eye-btn" type="button" onclick="togglePw('r-p',this)" title="Ko'rish">👁️</button></div></div>
+      <div class="auth-field"><label>Parolni tasdiqlang</label><div class="pw-wrap"><input id="r-p2" type="password" placeholder="••••••••"/><button class="eye-btn" type="button" onclick="togglePw('r-p2',this)" title="Ko'rish">👁️</button></div></div>
       <button class="btn btn-primary btn-full" onclick="doReg()" style="margin-top:6px">Ro'yxatdan o'tish →</button>
     </div>
   </div>
@@ -998,7 +1059,7 @@ select {
 <!-- ═══ QUIZ ═══ -->
 <div id="s-quiz" class="screen">
   <div class="q-head">
-    <span class="q-num" id="qnum">1/10</span>
+    <span class="q-num" id="qnum">1/30</span>
     <div class="prog-wrap"><div class="prog-bar" id="pbar" style="width:10%"></div></div>
     <span class="q-badge" id="qbadge">0 ball</span>
   </div>
@@ -1106,6 +1167,7 @@ select {
   <button class="nb"    id="nb-friends" onclick="navTo('friends')"><span class="ni">👥</span>Do'stlar</button>
   <button class="nb"    id="nb-set"     onclick="navTo('set')"><span class="ni">⚙️</span>Sozlamalar</button>
 </div>
+<canvas id="confetti-canvas"></canvas>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1288,9 +1350,6 @@ async function syncUser() {
   await fbSet(`users/${CU.username}`, CU); saveCU(CU);
 }
 
-/* ═══════════════════════════════════════
-   SCORES — AYNAN ISHLAYDIGAN KOD
-═══════════════════════════════════════ */
 async function saveScore(entry) {
   // Har o'ynaganida umumiy ballga qo'shiladi (almashtirmaydi)
   const key = entry.username;
@@ -1396,21 +1455,21 @@ function top3(list) {
       <div class="t3-sub">${s.games || 1} ta o'yin</div>
     </div>`).join('')}</div>`;
 }
-function lbRow(s, i) {
+function lbRow(s, i, filter) {
   const a = avStyle(s.name);
   const isMe = CU && s.username === CU.username;
   const ri = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
-  return `<div class="lb-row${isMe ? ' me' : ''}" style="animation-delay:${i * .04}s">
+  const f = filter || ctab;
+  const sc = f==='easy' ? (s.easyScore||0) : f==='medium' ? (s.mediumScore||0) : f==='hard' ? (s.hardScore||0) : (s.totalScore||0);
+  const tag = f==='easy' ? 'Oson' : f==='medium' ? "O'rtacha" : f==='hard' ? 'Qiyin' : `${s.games||0} o'yin`;
+  const tagBg = f==='easy' ? DC.easy[0] : f==='medium' ? DC.medium[0] : f==='hard' ? DC.hard[0] : 'rgba(108,99,255,.12)';
+  const tagCl = f==='easy' ? DC.easy[1] : f==='medium' ? DC.medium[1] : f==='hard' ? DC.hard[1] : 'var(--a2)';
+  return `<div class="lb-row${isMe ? ' me' : ''}" style="animation-delay:${Math.min(i,10)*.04}s">
     <span class="lb-rk">${ri}</span>
     <div class="lb-av" style="background:${a.bg};color:${a.col}">${a.txt}</div>
     <span class="lb-nm">${s.name}${isMe ? ' 👈' : ''}</span>
-    <span class="lb-df" style="background:rgba(108,99,255,.12);color:var(--a2)">${s.games || 1} o'yin</span>
-    <span class="lb-sc">${
-      ctab==='easy' ? (s.easyScore||0) :
-      ctab==='medium' ? (s.mediumScore||0) :
-      ctab==='hard' ? (s.hardScore||0) :
-      (s.totalScore||0)
-    }</span>
+    <span class="lb-df" style="background:${tagBg};color:${tagCl}">${tag}</span>
+    <span class="lb-sc">${sc}</span>
   </div>`;
 }
 async function loadLB(filter) {
@@ -1437,8 +1496,8 @@ async function loadLB(filter) {
     document.getElementById('lb-home').innerHTML = '<div class="lb-empty">Hali hech kim o\'ynamagan! 🚀<br>Birinchi bo\'ling!</div>';
     return;
   }
-  document.getElementById('t3-home').innerHTML = top3(filt);
-  document.getElementById('lb-home').innerHTML = filt.slice(3, 15).map((s, i) => lbRow(s, i + 3)).join('');
+  document.getElementById('t3-home').innerHTML = top3(filt, filter);
+  document.getElementById('lb-home').innerHTML = filt.slice(3, 15).map((s, i) => lbRow(s, i + 3, filter)).join('');
 }
 function lbTab(el, f) {
   document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('on'));
@@ -1590,35 +1649,43 @@ function mkQ(text, a) {
   return { text, ans: a, opts: [...o].sort(() => Math.random() - .5) };
 }
 function gE() {
-  const t = rn(0,3);
-  if(t===0){const op=rn(0,1)?'+':'-';let a=rn(1,30),b=rn(1,30);if(op==='-'&&b>a)[a,b]=[b,a];return mkQ(`${a} ${op} ${b} = ?`,op==='+'?a+b:a-b);}
-  if(t===1){const a=rn(1,10),b=rn(1,10);return mkQ(`${a} + ${b} + ${rn(1,10)} = ?`,a+b+rn(1,10));}
-  if(t===2){const a=rn(10,50),b=rn(1,10);return mkQ(`${a} - ${b} = ?`,a-b);}
-  const a=rn(2,5),b=rn(1,9);return mkQ(`${a} × ${b} = ?`,a*b);
+  const t = rn(0,5);
+  if(t===0){const op=rn(0,1)?'+':'-';let a=rn(5,50),b=rn(5,30);if(op==='-'&&b>a)[a,b]=[b,a];return mkQ(`${a} ${op} ${b} = ?`,op==='+'?a+b:a-b);}
+  if(t===1){const a=rn(1,15),b=rn(1,15),c=rn(1,15);return mkQ(`${a} + ${b} + ${c} = ?`,a+b+c);}
+  if(t===2){let a=rn(20,80),b=rn(5,30);if(b>a)[a,b]=[b,a];return mkQ(`${a} − ${b} = ?`,a-b);}
+  if(t===3){const a=rn(2,6),b=rn(2,9);return mkQ(`${a} × ${b} = ?`,a*b);}
+  if(t===4){const a=rn(1,9),b=rn(1,9),c=rn(1,9);return mkQ(`${a} + ${b} − ${c} = ?`,a+b-c);}
+  const a=rn(10,50),b=rn(1,9);return mkQ(`${a} + ${b} × 2 = ?`,a+b*2);
 }
 function gM() {
-  const t = rn(0,6);
-  if(t===0){const a=rn(2,15),b=rn(2,15);return mkQ(`${a} × ${b} = ?`,a*b);}
-  if(t===1){const b=rn(2,12),a=b*rn(2,10);return mkQ(`${a} ÷ ${b} = ?`,a/b);}
-  if(t===2){const a=rn(10,99),b=rn(10,99);return mkQ(`${a} + ${b} = ?`,a+b);}
-  if(t===3){let a=rn(20,99),b=rn(10,50);if(b>a)[a,b]=[b,a];return mkQ(`${a} − ${b} = ?`,a-b);}
-  if(t===4){const n=rn(2,10);return mkQ(`${n}² = ?`,n*n);}
-  if(t===5){const a=rn(2,9),b=rn(2,9),c=rn(1,5);return mkQ(`${a} × ${b} + ${c} = ?`,a*b+c);}
-  const a=rn(10,20),b=rn(2,5);return mkQ(`${a} × ${b} = ?`,a*b);
+  const t = rn(0,9);
+  if(t===0){const a=rn(3,20),b=rn(3,20);return mkQ(`${a} × ${b} = ?`,a*b);}
+  if(t===1){const b=rn(2,15),a=b*rn(3,12);return mkQ(`${a} ÷ ${b} = ?`,a/b);}
+  if(t===2){const a=rn(20,150),b=rn(20,100);return mkQ(`${a} + ${b} = ?`,a+b);}
+  if(t===3){let a=rn(50,200),b=rn(20,80);if(b>a)[a,b]=[b,a];return mkQ(`${a} − ${b} = ?`,a-b);}
+  if(t===4){const n=rn(2,13);return mkQ(`${n}² = ?`,n*n);}
+  if(t===5){const a=rn(2,12),b=rn(2,12),c=rn(2,10);return mkQ(`${a} × ${b} + ${c} = ?`,a*b+c);}
+  if(t===6){const a=rn(10,25),b=rn(3,8);return mkQ(`${a} × ${b} = ?`,a*b);}
+  if(t===7){const a=rn(5,20),b=rn(2,9),c=rn(2,8);return mkQ(`${a} × ${b} − ${c} = ?`,a*b-c);}
+  if(t===8){const sq=[4,9,16,25,36,49,64,81,100,121,144];const n=sq[rn(0,sq.length-1)];return mkQ(`√${n} = ?`,Math.sqrt(n));}
+  const a=rn(10,30),b=rn(2,9);return mkQ(`(${a} + ${b}) × 2 = ?`,(a+b)*2);
 }
 function gH() {
-  const t = rn(0,8);
-  if(t===0){const a=rn(2,20),b=rn(2,20),c=rn(1,15);return mkQ(`${a}×${b}+${c}=?`,a*b+c);}
-  if(t===1){const n=rn(2,15);return mkQ(`${n}² = ?`,n*n);}
-  if(t===2){const sq=[4,9,16,25,36,49,64,81,100,121,144,169,196,225];const n=sq[rn(0,sq.length-1)];return mkQ(`√${n} = ?`,Math.sqrt(n));}
-  if(t===3){const a=rn(1,9),b=rn(1,9);return mkQ(`${a*10}% dan ${b*10} = ?`,Math.round(a*b/10*10));}
-  if(t===4){const a=rn(2,20),b=rn(2,20),c=rn(2,10);const v=a*b-c;if(v<1)return gH();return mkQ(`${a}×${b}−${c}=?`,v);}
-  if(t===5){const a=rn(10,30),b=rn(10,30);return mkQ(`${a}² − ${b}² = ?`,(a-b)*(a+b));}
-  if(t===6){const a=rn(2,12),b=rn(2,5),c=rn(2,5);return mkQ(`${a} × ${b} × ${c} = ?`,a*b*c);}
-  if(t===7){const b=rn(3,15),a=b*rn(3,12);return mkQ(`${a} ÷ ${b} = ?`,a/b);}
-  const a=rn(100,999),b=rn(10,99);return mkQ(`${a} + ${b} = ?`,a+b);
+  const t = rn(0,11);
+  if(t===0){const a=rn(5,25),b=rn(5,20),c=rn(2,15);return mkQ(`${a}×${b}+${c}=?`,a*b+c);}
+  if(t===1){const n=rn(5,20);return mkQ(`${n}² = ?`,n*n);}
+  if(t===2){const sq=[4,9,16,25,36,49,64,81,100,121,144,169,196,225,256,289,324,361,400];const n=sq[rn(0,sq.length-1)];return mkQ(`√${n} = ?`,Math.sqrt(n));}
+  if(t===3){const a=rn(1,9),b=rn(1,9);return mkQ(`${a*10}% dan ${b*10} = ?`,Math.round(a*b));}
+  if(t===4){const a=rn(5,25),b=rn(5,20),c=rn(2,10);const v=a*b-c;if(v<1)return gH();return mkQ(`${a}×${b}−${c}=?`,v);}
+  if(t===5){const a=rn(10,30),b=rn(5,20);return mkQ(`${a}² − ${b}² = ?`,(a-b)*(a+b));}
+  if(t===6){const a=rn(3,12),b=rn(2,6),c=rn(2,6);return mkQ(`${a} × ${b} × ${c} = ?`,a*b*c);}
+  if(t===7){const b=rn(4,18),a=b*rn(4,15);return mkQ(`${a} ÷ ${b} = ?`,a/b);}
+  if(t===8){const a=rn(100,999),b=rn(50,299);return mkQ(`${a} + ${b} = ?`,a+b);}
+  if(t===9){const a=rn(100,500),b=rn(50,200);const v=a-b;if(v<1)return gH();return mkQ(`${a} − ${b} = ?`,v);}
+  if(t===10){const a=rn(2,12),b=rn(2,12),c=rn(2,8),d=rn(2,6);return mkQ(`${a}×${b} + ${c}×${d}=?`,a*b+c*d);}
+  const a=rn(3,15),b=rn(3,10),c=rn(2,8);return mkQ(`(${a}+${b}) × ${c}=?`,(a+b)*c);
 }
-function genQs(d) { const f=d==='easy'?gE:d==='medium'?gM:gH; return Array.from({length:20},f); }
+function genQs(d) { const f=d==='easy'?gE:d==='medium'?gM:gH; return Array.from({length:30},f); }
 
 function startSolo() {
   isFriend = false;
@@ -1638,8 +1705,8 @@ function loadQ() {
   if (qi >= qs.length) { endGame(); return; }
   ans = false;
   const q = qs[qi];
-  document.getElementById('qnum').textContent   = `${qi+1}/20`;
-  document.getElementById('pbar').style.width   = `${Math.round((qi+1)/20*100)}%`;
+  document.getElementById('qnum').textContent   = `${qi+1}/30`;
+  document.getElementById('pbar').style.width   = `${Math.round((qi+1)/30*100)}%`;
   document.getElementById('qbadge').textContent = `${score} ball`;
   document.getElementById('qtext').textContent  = q.text;
   const tl = diff==='easy'?15:diff==='medium'?12:10;
@@ -1683,9 +1750,11 @@ function answer(btn, chosen, a) {
     const sp = Math.max(0, tLeft) * (diff==='easy'?3:diff==='medium'?5:8);
     const g = bo + sp; score += g; cor++;
     fb.textContent = `✓ To'g'ri! +${g} ball`; fb.className = 'fb-msg ok'; beep('ok');
+    if (typeof triggerConfetti === 'function') triggerConfetti(btn);
   } else {
     btn.classList.add('no'); wrg++;
     fb.textContent = `✗ Noto'g'ri. To'g'ri: ${a}`; fb.className = 'fb-msg no'; beep('no');
+    if (typeof triggerWrong === 'function') triggerWrong(btn);
   }
   document.getElementById('qbadge').textContent = `${score} ball`;
   if (isFriend) syncFriend(false);
@@ -1707,6 +1776,13 @@ async function endGame() {
   document.getElementById('r-t3').innerHTML = '';
   document.getElementById('fr-wrap').style.display = 'none';
   showS('s-result'); navA('home');
+  // Big confetti on good result
+  if (cor >= 15 && typeof triggerConfetti === 'function') {
+    setTimeout(() => {
+      triggerConfetti(document.getElementById('r-score'));
+      setTimeout(() => triggerConfetti(document.getElementById('r-score')), 400);
+    }, 300);
+  }
 
   // Friends sync
   if (isFriend) await syncFriend(true);
@@ -1750,7 +1826,7 @@ async function endGame() {
   document.getElementById('r-r').textContent = `#${rank}`;
   const ic = ['🏆', '🥇', '🥈'];
   document.getElementById('r-icon').textContent = typeof rank === 'number' && rank <= 3 ? ic[rank - 1] : score >= 500 ? '🎯' : '⭐';
-  document.getElementById('r-t3').innerHTML = filt.length ? top3(filt) : '';
+  document.getElementById('r-t3').innerHTML = filt.length ? top3(filt, 'all') : '';
   document.getElementById('r-lb').innerHTML = filt.slice(3, 12).map((s, i) => lbRow(s, i + 3)).join('');
 }
 
@@ -1762,7 +1838,7 @@ function goHome()    { showS('s-home'); loadLB(ctab); navA('home'); }
 function goFriends() { document.getElementById('join-box').style.display='none'; document.getElementById('join-msg').textContent=''; showS('s-friends'); navA('friends'); }
 function goSet()     { updProf(); showS('s-set'); navA('set'); }
 function share() {
-  const txt = `${CU.name} MathRace da ${lastSc} ball to'pladi! 🧮\n(${DL[diff]}, ${cor}/10 to'g'ri)\nSen ham sinab ko'r!`;
+  const txt = `${CU.name} MathRace da ${lastSc} ball to'pladi! 🧮\n(${DL[diff]}, ${cor}/30 to'g'ri)\nSen ham sinab ko'r!`;
   if (navigator.share) navigator.share({ title: 'MathRace', text: txt }).catch(() => {});
   else navigator.clipboard.writeText(txt).then(() => toast('Nusxalandi! 📋'));
 }
@@ -1782,6 +1858,119 @@ function toast(msg) { const t = document.getElementById('toast'); t.textContent 
 /* ═══════════════════════════════════════
    INIT
 ═══════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   PASSWORD TOGGLE
+═══════════════════════════════════════ */
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const isHidden = inp.type === 'password';
+  inp.type = isHidden ? 'text' : 'password';
+  btn.textContent = isHidden ? '🙈' : '👁️';
+}
+
+/* ═══════════════════════════════════════
+   ANIMATIONS: CONFETTI & EFFECTS
+═══════════════════════════════════════ */
+(function() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [], animId = null;
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function rand(a, b) { return Math.random() * (b - a) + a; }
+
+  function launchConfetti(x, y) {
+    const colors = ['#6c63ff','#10e888','#ffc22e','#ff4d6d','#38d9f5','#f9a8d4','#fff'];
+    for (let i = 0; i < 38; i++) {
+      particles.push({
+        x, y,
+        vx: rand(-5, 5),
+        vy: rand(-12, -4),
+        color: colors[Math.floor(rand(0, colors.length))],
+        size: rand(5, 10),
+        rot: rand(0, 360),
+        rotV: rand(-8, 8),
+        gravity: rand(.28, .5),
+        life: 1,
+        decay: rand(.018, .03),
+        shape: Math.random() > .5 ? 'rect' : 'circle'
+      });
+    }
+    if (!animId) drawConfetti();
+  }
+
+  function drawConfetti() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      ctx.save();
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      if (p.shape === 'rect') ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
+      else { ctx.beginPath(); ctx.arc(0, 0, p.size/2, 0, Math.PI*2); ctx.fill(); }
+      ctx.restore();
+      p.x  += p.vx;
+      p.y  += p.vy;
+      p.vy += p.gravity;
+      p.rot += p.rotV;
+      p.life -= p.decay;
+    });
+    particles = particles.filter(p => p.life > 0);
+    if (particles.length > 0) animId = requestAnimationFrame(drawConfetti);
+    else { animId = null; ctx.clearRect(0, 0, canvas.width, canvas.height); }
+  }
+
+  window.triggerConfetti = function(btn) {
+    const r = btn ? btn.getBoundingClientRect() : null;
+    const cx = r ? r.left + r.width/2 : window.innerWidth/2;
+    const cy = r ? r.top + r.height/2 : window.innerHeight/2;
+    launchConfetti(cx, cy);
+    // star burst
+    const emojis = ['⭐','✨','🌟','💫'];
+    for (let i = 0; i < 6; i++) {
+      const el = document.createElement('div');
+      el.className = 'star-burst';
+      el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+      el.style.left = cx + 'px';
+      el.style.top  = cy + 'px';
+      const angle = (i / 6) * Math.PI * 2;
+      const dist  = 80 + Math.random() * 60;
+      el.style.setProperty('--dx', Math.cos(angle)*dist + 'px');
+      el.style.setProperty('--dy', Math.sin(angle)*dist + 'px');
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 950);
+    }
+  };
+
+  window.triggerWrong = function(btn) {
+    // Screen red flash
+    const quiz = document.getElementById('s-quiz');
+    quiz.classList.add('screen-flash-red');
+    quiz.addEventListener('animationend', () => quiz.classList.remove('screen-flash-red'), {once:true});
+    // Shake ❌ floating
+    if (btn) {
+      const r = btn.getBoundingClientRect();
+      const el = document.createElement('div');
+      el.className = 'star-burst';
+      el.textContent = '❌';
+      el.style.fontSize = '28px';
+      el.style.left = (r.left + r.width/2) + 'px';
+      el.style.top  = (r.top  + r.height/2) + 'px';
+      el.style.setProperty('--dx', '0px');
+      el.style.setProperty('--dy', '-60px');
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 950);
+    }
+  };
+})();
+
 loadCfg();
 CU = getCU();
 if (CU) afterLogin();
@@ -1794,4 +1983,4 @@ document.getElementById('room-inp').addEventListener('keydown', e => { if (e.key
 setInterval(() => { if (document.getElementById('s-home').classList.contains('on')) loadLB(ctab); }, 15000);
 </script>
 </body>
-   </html>
+</html>
